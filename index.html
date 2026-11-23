@@ -7,118 +7,145 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Patrimoine">
-<meta name="theme-color" content="#14181d">
+<meta name="theme-color" content="#0a0b0d">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Patrimoine</title>
 <style>
+/* Direction : banque privée. Noir profond, or champagne, chiffres en serif. */
 :root{
   color-scheme:light dark;
-  --bg:light-dark(#eef1f4,#101317);
-  --panel:light-dark(#ffffff,#1a1f25);
-  --ink:light-dark(#0f1216,#eef1f4);
-  --mute:light-dark(#5d6670,#9aa4ae);
-  --line:light-dark(#dde2e7,#2a3139);
-  --acc:light-dark(#1846d8,#6d8dff);
-  --up:light-dark(#0f8a5f,#3fcf8e);
-  --down:light-dark(#c8302a,#ff6b63);
-  --crypto:#f2a900;--societe:#3b6cf6;--immo:#c8553d;--compte:#1f9e89;
+  --bg:light-dark(#f4f2ee,#0a0b0d);
+  --panel:light-dark(#ffffff,#131519);
+  --panel2:light-dark(#f8f6f2,#1a1d22);
+  --ink:light-dark(#141414,#f2efe9);
+  --mute:light-dark(#77736c,#8d8a84);
+  --line:light-dark(rgba(20,20,20,.08),rgba(255,255,255,.07));
+  --gold:light-dark(#9a7b45,#d2b47c);
+  --goldsoft:light-dark(rgba(154,123,69,.12),rgba(210,180,124,.12));
+  --acc:var(--gold);
+  --up:light-dark(#2f7d5b,#6fcf9f);
+  --down:light-dark(#b24a3c,#ef8a7a);
+  --crypto:#d6a548;--societe:#7d93e8;--immo:#c47c5e;--compte:#5fb3a1;
+  --serif:ui-serif,"New York","Iowan Old Style",Georgia,serif;
+  --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
 }
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
-body{font:16px/1.45 -apple-system,BlinkMacSystemFont,"SF Pro Text","Segoe UI",Roboto,sans-serif;overflow-x:clip;
+body{font:16px/1.45 var(--sans);overflow-x:clip;-webkit-font-smoothing:antialiased;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
-input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--bg);border:1px solid var(--line);border-radius:12px;padding:12px;width:100%;min-height:46px}
-input:focus,select:focus,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
-label{display:block;font-size:14px;color:var(--mute);margin:12px 0 6px}
+input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;width:100%;min-height:48px;-webkit-appearance:none;appearance:none}
+select{background-image:linear-gradient(45deg,transparent 50%,var(--mute) 50%),linear-gradient(135deg,var(--mute) 50%,transparent 50%);background-position:calc(100% - 18px) 50%,calc(100% - 13px) 50%;background-size:5px 5px;background-repeat:no-repeat;padding-right:32px}
+input:focus,select:focus,button:focus-visible{outline:1.5px solid var(--gold);outline-offset:1px}
+label{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px;letter-spacing:.01em}
 .hidden{display:none!important}
 .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* Verrouillage */
-#lock{position:fixed;inset:0;background:#14181d;color:#eef1f4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;z-index:50;padding:24px}
-#lock h1{font-size:24px;margin:0;font-weight:600}
-#lockMsg{color:#9aa4ae;min-height:22px;text-align:center;font-size:15px}
-.dots{display:flex;gap:16px}
-.dots i{width:14px;height:14px;border-radius:50%;border:2px solid #6d7782}
-.dots i.on{background:#eef1f4;border-color:#eef1f4}
+#lock{position:fixed;inset:0;background:#0a0b0d;color:#f2efe9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:50;padding:24px}
+#lock .mark{width:56px;height:56px;border-radius:16px;border:1px solid rgba(210,180,124,.4);display:grid;place-items:center;color:#d2b47c;font:500 26px var(--serif)}
+#lock h1{font:400 28px var(--serif);margin:0;letter-spacing:.01em}
+#lockMsg{color:#8d8a84;min-height:22px;text-align:center;font-size:14px;max-width:300px}
+.dots{display:flex;gap:18px}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid #6b6760;transition:background .15s}
+.dots i.on{background:#d2b47c;border-color:#d2b47c}
 .dots.err{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
-.pad{display:grid;grid-template-columns:repeat(3,76px);gap:16px}
-.pad button{height:76px;border-radius:50%;background:#252b33;font-size:28px;font-weight:500}
-.pad button:active{background:#3a424c}
-.pad .ghost{background:none;font-size:16px}
+.pad{display:grid;grid-template-columns:repeat(3,78px);gap:18px;margin-top:8px}
+.pad button{height:78px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);font:300 30px var(--sans)}
+.pad button:active{background:rgba(210,180,124,.22)}
+.pad .ghost{background:none;border:0;font-size:20px;color:#8d8a84}
 
 /* Structure */
-header.top{display:flex;align-items:center;justify-content:space-between;padding:14px 18px 0}
-header.top h1{font-size:17px;margin:0;font-weight:600;color:var(--mute)}
+header.top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 0;max-width:720px;margin:0 auto}
+header.top h1{font-size:13px;margin:0;font-weight:500;color:var(--mute);letter-spacing:.04em}
 .iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}
-.iconbtn svg{width:22px;height:22px}
+.iconbtn svg{width:21px;height:21px}
 main{max-width:720px;margin:0 auto;padding:0 16px 120px}
-.hero{padding:10px 2px 8px}
-.total{font-size:clamp(34px,10vw,48px);font-weight:700;line-height:1.05;letter-spacing:-.02em}
-.delta{font-size:15px;margin-top:6px}
+.hero{padding:18px 4px 6px}
+.total{font:400 clamp(40px,12vw,56px)/1.02 var(--serif);letter-spacing:-.01em}
+.total .cts{color:var(--mute)}
+.delta{display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-top:12px;padding:5px 10px;border-radius:99px;background:var(--panel2)}
+.delta:empty{display:none}
 .delta.up{color:var(--up)}.delta.down{color:var(--down)}
-.status{font-size:13px;color:var(--mute);margin-top:4px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
-.status button{color:var(--acc);font-weight:600;padding:8px 0}
-.card{background:var(--panel);border-radius:18px;padding:16px;margin-top:14px}
-.card h2{font-size:15px;margin:0 0 10px;color:var(--mute);font-weight:600}
-.fig{position:relative;height:200px}
+.status{font-size:13px;color:var(--mute);margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.status button{color:var(--gold);font-weight:500;padding:8px 0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:22px;padding:18px;margin-top:14px}
+.card h2{font-size:13px;margin:0 0 14px;color:var(--mute);font-weight:500;letter-spacing:.04em}
+.fig{position:relative;height:190px}
 .fig svg{position:absolute;inset:0;width:100%;height:100%}
-.ranges{display:flex;gap:6px;margin-top:10px}
-.ranges button{flex:1;padding:8px 0;border-radius:10px;font-size:14px;color:var(--mute);min-height:36px}
-.ranges button.on{background:var(--bg);color:var(--ink);font-weight:600}
-.split{display:grid;grid-template-columns:130px 1fr;gap:16px;align-items:center}
-.legend{display:grid;gap:8px}
-.legend div{display:flex;align-items:center;gap:8px;font-size:15px}
-.legend b{font-weight:600;margin-left:auto}
-.sw{width:10px;height:10px;border-radius:3px;flex:none}
-.group h3{display:flex;align-items:center;gap:8px;font-size:15px;margin:0;padding:4px 0 8px}
-.group h3 span:last-child{margin-left:auto}
-.group+.group{margin-top:14px;border-top:1px solid var(--line);padding-top:12px}
-.row{display:flex;align-items:center;gap:12px;padding:10px 0;width:100%;text-align:left;min-height:52px}
+.ranges{display:flex;gap:4px;margin-top:12px;background:var(--panel2);border-radius:12px;padding:3px}
+.ranges button{flex:1;padding:7px 0;border-radius:9px;font-size:13px;color:var(--mute);min-height:34px}
+.ranges button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+
+/* Répartition */
+.rep{display:flex;align-items:center;gap:20px}
+.donut{position:relative;width:148px;height:148px;flex:none}
+.donut svg{display:block;width:148px;height:148px}
+.donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+.donut .c b{font:400 19px var(--serif)}
+.donut .c small{font-size:11px;color:var(--mute);margin-top:2px}
+.legend{flex:1;display:grid;gap:12px}
+.lg{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 10px;font-size:14px}
+.lg .pc{font-weight:600}
+.lg .am{grid-column:2/4;font-size:12px;color:var(--mute)}
+.lg .bar{grid-column:1/4;height:3px;border-radius:2px;background:var(--panel2);overflow:hidden}
+.lg .bar i{display:block;height:100%;border-radius:2px}
+.sw{width:8px;height:8px;border-radius:50%;flex:none}
+@media(max-width:390px){.rep{flex-direction:column;align-items:stretch}.donut{margin:0 auto 4px}}
+
+/* Liste */
+.group h3{display:flex;align-items:center;gap:8px;font-size:13px;margin:0;padding:2px 0 6px;color:var(--mute);font-weight:500;letter-spacing:.03em}
+.group h3 span:last-child{margin-left:auto;color:var(--ink);font-weight:600}
+.group+.group{margin-top:16px}
+.row{display:flex;align-items:center;gap:12px;padding:11px 0;width:100%;text-align:left;min-height:58px}
 .row+.row{border-top:1px solid var(--line)}
+.ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;font:500 15px var(--serif)}
 .row .nm{flex:1;overflow:hidden}
-.row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row small{display:block;color:var(--mute);font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.row .val{text-align:right;font-weight:600}
-.empty{color:var(--mute);text-align:center;padding:28px 10px}
-.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(20px + env(safe-area-inset-bottom));width:60px;height:60px;border-radius:50%;background:var(--acc);color:#fff;display:grid;place-items:center;box-shadow:0 8px 24px rgba(0,0,0,.25);z-index:5}
-.fab svg{width:28px;height:28px}
+.row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.row small{display:block;color:var(--mute);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
+.row .val{text-align:right;font-weight:600;font-size:15px}
+.empty{color:var(--mute);text-align:center;padding:30px 10px;line-height:1.6}
+.empty b{color:var(--gold)}
+.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;background:var(--gold);color:light-dark(#fff,#0a0b0d);display:grid;place-items:center;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:5}
+.fab svg{width:26px;height:26px}
 
 /* Feuilles modales */
-.sheet{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:20;display:flex;align-items:flex-end;justify-content:center}
-.sheet>div{background:var(--panel);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:20px 20px 0 0;padding:18px 18px calc(24px + env(safe-area-inset-bottom))}
+.sheet{position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:20;display:flex;align-items:flex-end;justify-content:center;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)}
+.sheet>div{background:var(--panel);width:100%;max-width:560px;max-height:92vh;overflow:auto;border-radius:26px 26px 0 0;padding:10px 20px calc(26px + env(safe-area-inset-bottom));border-top:1px solid var(--line)}
+.sheet>div::before{content:"";display:block;width:38px;height:4px;border-radius:2px;background:var(--line);margin:0 auto 10px}
 .sheet header{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px}
-.sheet header h2{margin:0;font-size:19px}
-.seg{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
-.seg button{padding:12px;border-radius:12px;border:1px solid var(--line);font-size:15px;display:flex;align-items:center;gap:8px;min-height:46px}
-.seg button.on{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 12%,transparent);font-weight:600}
-.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.btn{display:block;width:100%;padding:14px;border-radius:14px;background:var(--acc);color:#fff;font-weight:600;margin-top:18px;min-height:50px}
-.btn.sec{background:var(--bg);color:var(--ink)}
+.sheet header h2{margin:0;font:400 24px var(--serif)}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-top:10px}
+.seg button{padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:15px;display:flex;align-items:center;gap:10px;min-height:48px}
+.seg button.on{border-color:var(--gold);background:var(--goldsoft);font-weight:600}
+.two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
+.btn{display:block;width:100%;padding:15px;border-radius:16px;background:var(--gold);color:light-dark(#fff,#0a0b0d);font-weight:600;margin-top:20px;min-height:52px;letter-spacing:.01em}
+.btn.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
 .btn.danger{background:none;color:var(--down)}
-.hint{font-size:13px;color:var(--mute);margin-top:6px}
-.results{margin-top:6px;border:1px solid var(--line);border-radius:12px;overflow:hidden}
-.results button{display:flex;gap:10px;align-items:center;width:100%;padding:12px;text-align:left;min-height:46px}
+.hint{font-size:12.5px;color:var(--mute);margin-top:6px;line-height:1.5}
+.results{margin-top:6px;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.results button{display:flex;gap:10px;align-items:center;justify-content:space-between;width:100%;padding:12px 14px;text-align:left;min-height:48px}
 .results button+button{border-top:1px solid var(--line)}
 .results small{color:var(--mute)}
-.chosen{margin-top:8px;padding:10px 12px;border-radius:12px;background:var(--bg);font-size:15px}
-.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:12px 0;border-top:1px solid var(--line)}
+.chosen{margin-top:8px;padding:11px 14px;border-radius:14px;background:var(--goldsoft);font-size:15px}
+.setrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 0;border-top:1px solid var(--line)}
 .setrow:first-of-type{border-top:0}
-.theme{display:flex;background:var(--bg);border-radius:12px;padding:3px;gap:3px}
+.theme{display:flex;background:var(--panel2);border-radius:12px;padding:3px;gap:3px}
 .theme button{padding:8px 12px;border-radius:9px;font-size:14px;color:var(--mute);min-height:38px}
-.theme button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.12)}
-.fx{display:grid;grid-template-columns:70px 1fr 1fr;gap:8px;align-items:center;margin-top:8px;font-size:14px}
-.fx input{min-height:40px;padding:8px}
-#toast{position:fixed;left:50%;bottom:calc(96px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:14px;z-index:60;max-width:90vw;text-align:center}
-@media(max-width:400px){.split{grid-template-columns:104px 1fr}.pad{grid-template-columns:repeat(3,68px)}.pad button{height:68px}}
+.theme button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.fx{display:grid;grid-template-columns:60px minmax(0,1fr) minmax(0,1fr);gap:8px;align-items:center;margin-top:8px;font-size:14px}
+.fx input{min-height:40px;padding:8px 10px}
+#toast{position:fixed;left:50%;bottom:calc(98px + env(safe-area-inset-bottom));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:11px 18px;border-radius:14px;font-size:14px;z-index:60;max-width:90vw;text-align:center}
+@media(max-width:380px){.pad{grid-template-columns:repeat(3,70px)}.pad button{height:70px}}
 </style>
 </head>
 <body>
 
 <div id="lock">
+  <div class="mark">P</div>
   <h1 id="lockTitle">Patrimoine</h1>
   <div id="lockMsg"></div>
   <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -132,7 +159,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 
 <div id="app" class="hidden">
   <header class="top">
-    <h1>Mon patrimoine</h1>
+    <h1>Patrimoine net</h1>
     <div style="display:flex">
       <button class="iconbtn" id="btnLock" aria-label="Verrouiller"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
       <button class="iconbtn" id="btnSettings" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -155,8 +182,8 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 
     <section class="card" id="repCard">
       <h2>Répartition</h2>
-      <div class="split">
-        <svg id="donut" viewBox="0 0 120 120" aria-label="Répartition par catégorie"></svg>
+      <div class="rep">
+        <div class="donut"><svg id="donut" viewBox="0 0 148 148" width="148" height="148" aria-label="Répartition par catégorie"></svg><div class="c" id="donutC"></div></div>
         <div class="legend" id="legend"></div>
       </div>
     </section>
@@ -237,10 +264,10 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 <script>
 {
 const CATS = {
-  crypto:{label:'Cryptos', one:'Crypto', color:'var(--crypto)', hex:'#f2a900'},
-  societe:{label:'Sociétés', one:'Société', color:'var(--societe)', hex:'#3b6cf6'},
-  immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#c8553d'},
-  compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#1f9e89'}
+  crypto:{label:'Cryptos', one:'Crypto', color:'var(--crypto)', hex:'#d6a548', ini:'₿'},
+  societe:{label:'Sociétés', one:'Société', color:'var(--societe)', hex:'#7d93e8', ini:'S'},
+  immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#c47c5e', ini:'I'},
+  compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#5fb3a1', ini:'€'}
 };
 const BASES = ['EUR','USD','GBP','CHF','CAD'];
 const VAULT = 'patrimoine.vault.v1';
@@ -361,14 +388,15 @@ const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-d
 function render(){
   if (!S) return;
   const t = totals();
-  $('total').textContent = money(t.total);
+  { const f = money(t.total, S.base, 2), m = f.match(/^(.*?)([,.]\d{2})(\D*)$/);
+    $('total').innerHTML = m ? esc(m[1]) + '<span class="cts">' + esc(m[2]) + '</span>' + esc(m[3]) : esc(f); }
   const hist = S.history.filter(h => h.base === S.base);
   const ref = hist.filter(h => h.d <= new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE')).pop() || (hist.length > 1 ? hist[0] : null);
   const dl = $('delta');
   if (ref && ref.total){
     const diff = t.total - ref.total;
     dl.className = 'delta ' + (diff >= 0 ? 'up' : 'down');
-    dl.textContent = (diff >= 0 ? '+' : '−') + money(Math.abs(diff)) + ' (' + pct(diff / ref.total) + ') depuis le ' + new Date(ref.d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+    dl.textContent = (diff >= 0 ? '↗ +' : '↘ −') + money(Math.abs(diff)) + ' · ' + pct(diff / ref.total) + ' depuis le ' + new Date(ref.d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
   } else { dl.className = 'delta'; dl.textContent = ''; }
   $('priceStatus').textContent = (S.pricesAt ? 'Prix du ' + when(S.pricesAt) : 'Prix jamais actualisés') + (t.missing ? ' · ' + t.missing + ' actif(s) sans prix ni taux' : '');
   drawChart(); drawDonut(t); drawList();
@@ -397,23 +425,26 @@ function drawList(){
           if (!rate(cur)) sub += ' · taux ' + esc(cur) + ' manquant';
         }
         if (a.note) sub += (sub ? ' · ' : '') + esc(a.note);
-        return `<button class="row" data-id="${a.id}"><div class="nm"><div>${esc(a.name)}</div>${sub ? `<small>${sub}</small>` : ''}</div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
+        return `<button class="row" data-id="${a.id}"><span class="ico" style="background:color-mix(in srgb,${CATS[a.cat].hex} 16%,transparent);color:${CATS[a.cat].hex}">${a.cat === 'crypto' && a.symbol ? esc(a.symbol.slice(0, 1).toUpperCase()) : CATS[a.cat].ini}</span><div class="nm"><div>${esc(a.name)}</div>${sub ? `<small>${sub}</small>` : ''}</div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
       }).join('') + '</div>';
   }).join('');
 }
 
 function drawDonut(t){
-  const svg = $('donut'), entries = Object.entries(t.by).filter(([, v]) => v > 0);
+  const svg = $('donut'), entries = Object.entries(t.by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   $('repCard').classList.toggle('hidden', !entries.length);
   if (!entries.length) return;
-  const R = 46, C = 2 * Math.PI * R; let off = 0;
-  svg.innerHTML = `<circle cx="60" cy="60" r="${R}" fill="none" stroke="var(--line)" stroke-width="18"/>` + entries.map(([c, v]) => {
-    const len = v / t.total * C;
-    const s = `<circle cx="60" cy="60" r="${R}" fill="none" stroke="${CATS[c].hex}" stroke-width="18" stroke-dasharray="${Math.max(len - 1.5, .5)} ${C}" stroke-dashoffset="${-off}" transform="rotate(-90 60 60)"/>`;
-    off += len; return s;
+  const R = 62, SW = 12, C = 2 * Math.PI * R, gap = entries.length > 1 ? 6 : 0; let off = 0;
+  svg.innerHTML = `<circle cx="74" cy="74" r="${R}" fill="none" stroke="var(--panel2)" stroke-width="${SW}"/>` + entries.map(([c, v]) => {
+    const len = v / t.total * C, d = Math.max(len - gap, 0.01);
+    const el = `<circle cx="74" cy="74" r="${R}" fill="none" stroke="${CATS[c].hex}" stroke-width="${SW}" stroke-linecap="${len > gap + SW ? 'round' : 'butt'}" stroke-dasharray="${Math.max(d - (len > gap + SW ? SW : 0), 0.01)} ${C}" stroke-dashoffset="${-(off + gap / 2 + (len > gap + SW ? SW / 2 : 0))}" transform="rotate(-90 74 74)"/>`;
+    off += len; return el;
   }).join('');
-  $('legend').innerHTML = entries.sort((a, b) => b[1] - a[1]).map(([c, v]) =>
-    `<div><span class="sw" style="background:${CATS[c].color}"></span>${CATS[c].label}<b class="num">${new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:0}).format(v / t.total)}</b></div>`).join('');
+  const short = new Intl.NumberFormat('fr-FR', {notation:'compact', maximumFractionDigits:1}).format(t.total);
+  $('donutC').innerHTML = `<b class="num">${esc(short)}</b><small>${entries.length} catégorie${entries.length > 1 ? 's' : ''}</small>`;
+  const P = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits: v < .1 ? 1 : 0}).format(v);
+  $('legend').innerHTML = entries.map(([c, v]) =>
+    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="pc num">${P(v / t.total)}</span><span class="am num">${money(v)}</span><span class="bar"><i style="width:${(v / t.total * 100).toFixed(1)}%;background:${CATS[c].hex}"></i></span></div>`).join('');
 }
 
 function drawChart(){
@@ -431,12 +462,13 @@ function drawChart(){
   const L = 4, Rt = 4, T = 22, B = 22;
   const X = x => L + (x - x0) / (x1 - x0 || 1) * (W - L - Rt), Y = y => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
   const line = pts.map((p, i) => (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + Y(ys[i]).toFixed(1)).join('');
-  const up = ys[ys.length - 1] >= ys[0], col = up ? 'var(--up)' : 'var(--down)';
+  const up = ys[ys.length - 1] >= ys[0], col = 'var(--gold)';
   const lbl = d => new Date(d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
-  s.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${up ? '#3fcf8e' : '#ff6b63'}" stop-opacity=".28"/><stop offset="1" stop-color="${up ? '#3fcf8e' : '#ff6b63'}" stop-opacity="0"/></linearGradient></defs>` +
+  s.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a96e" stop-opacity=".30"/><stop offset="1" stop-color="#c9a96e" stop-opacity="0"/></linearGradient></defs>` +
+    [.25, .5, .75].map(f => `<line x1="0" x2="${W}" y1="${T + f * (H - T - B)}" y2="${T + f * (H - T - B)}" stroke="var(--line)" stroke-dasharray="2 4"/>`).join('') +
     `<path d="${line}L${X(x1)} ${H - B}L${X(x0)} ${H - B}Z" fill="url(#g)"/>` +
-    `<path d="${line}" fill="none" stroke="${col}" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>` +
-    `<circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="4" fill="${col}"/>` +
+    `<path d="${line}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` +
+    `<circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="7" fill="var(--goldsoft)"/><circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="3.5" fill="${col}"/>` +
     `<text x="${L}" y="14" fill="var(--mute)" font-size="12">${money(Math.max(...ys))} max</text>` +
     `<text x="${L}" y="${H - 5}" fill="var(--mute)" font-size="12">${lbl(pts[0].d)}</text>` +
     `<text x="${W - Rt}" y="${H - 5}" fill="var(--mute)" font-size="12" text-anchor="end">${lbl(pts[pts.length - 1].d)}</text>`;
@@ -615,7 +647,7 @@ const THEME = 'patrimoine.theme';
 function applyTheme(t){
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]').content = dark ? '#101317' : '#eef1f4';
+  document.querySelector('meta[name=theme-color]').content = dark ? '#0a0b0d' : '#f4f2ee';
   [...$('sTheme').children].forEach(b => b.classList.toggle('on', b.dataset.t === t));
 }
 let theme = 'auto';
