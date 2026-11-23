@@ -60,6 +60,9 @@ label{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px;letter-sp
 .pad button::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35) 0,rgba(255,255,255,0) 70%);opacity:0;transform:scale(.3)}
 .pad button.ripple::after{animation:rip .45s ease-out}
 @keyframes rip{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
+.pad .bio svg{width:34px;height:34px}
+.pad .bio{color:#c3ccd7}
+.pad .off{visibility:hidden;pointer-events:none}
 .pad .ghost.press{background:rgba(255,255,255,.08)}
 .dots i.on{animation:pop .22s ease-out}
 @keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
@@ -256,7 +259,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
     <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-    <span></span><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
+    <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
 </div>
 
@@ -363,9 +366,10 @@ html,body{overscroll-behavior-y:none}
   <div class="setrow"><span>Restaurer une sauvegarde</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnImport">Importer</button></div>
   <input type="file" id="fileImport" accept="application/json,.json" class="hidden">
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
+  <div class="setrow hidden" id="bioRow"><span>Déverrouillage par Face ID</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnBioSet" type="button">Activer</button></div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 4.0 du 23/11/2026.</div>
+  <div class="hint">Version 4.1 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
@@ -433,6 +437,73 @@ async function openVault(pin){
 function fresh(){ return {v:1, base:'EUR', assets:[], prices:{}, logos:{}, fx:{rates:{}, t:0, manual:{}}, history:[]}; }
 function migrate(s){ const f = fresh(); return Object.assign(f, s, {fx:Object.assign(f.fx, s.fx || {})}); }
 
+/* ---------- Face ID (WebAuthn) ---------- */
+const BIO = 'patrimony.bio';
+let curPin = '', bioOK = false;
+const bioCfg = () => { try { return JSON.parse(localStorage.getItem(BIO)); } catch(e){ return null; } };
+function idb(){ return new Promise((res, rej) => { const r = indexedDB.open('patrimony', 1); r.onupgradeneeded = () => r.result.createObjectStore('keys'); r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error); }); }
+async function idbGet(k){ const db = await idb(); return new Promise((res, rej) => { const t = db.transaction('keys').objectStore('keys').get(k); t.onsuccess = () => res(t.result); t.onerror = () => rej(t.error); }); }
+async function idbPut(k, v){ const db = await idb(); return new Promise((res, rej) => { const t = db.transaction('keys', 'readwrite').objectStore('keys').put(v, k); t.onsuccess = () => res(); t.onerror = () => rej(t.error); }); }
+async function idbDel(k){ try { const db = await idb(); db.transaction('keys', 'readwrite').objectStore('keys').delete(k); } catch(e){} }
+const rnd = n => crypto.getRandomValues(new Uint8Array(n));
+const prfKey = bytes => crypto.subtle.importKey('raw', bytes, 'AES-GCM', false, ['encrypt', 'decrypt']);
+async function bioCheck(){
+  try { bioOK = !!(window.PublicKeyCredential && await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable()); } catch(e){ bioOK = false; }
+  $('btnBio').classList.toggle('off', !bioOK || !bioCfg());
+  drawBioSetting();
+}
+function drawBioSetting(){
+  const row = $('bioRow'); if (!row) return;
+  row.classList.toggle('hidden', !bioOK);
+  $('btnBioSet').textContent = bioCfg() ? 'Désactiver' : 'Activer';
+}
+async function enableBio(){
+  if (!curPin){ toast('Verrouille puis déverrouille avec ton code, puis réessaie'); return; }
+  const salt = rnd(32);
+  let cred;
+  try {
+    cred = await navigator.credentials.create({publicKey:{
+      challenge: rnd(32), rp:{name:'Patrimony', id:location.hostname},
+      user:{id: rnd(16), name:'Patrimony', displayName:'Patrimony'},
+      pubKeyCredParams:[{type:'public-key', alg:-7}, {type:'public-key', alg:-257}],
+      authenticatorSelection:{authenticatorAttachment:'platform', userVerification:'required', residentKey:'preferred'},
+      timeout:60000, extensions:{prf:{eval:{first:salt}}}
+    }});
+  } catch(e){ if (e.name !== 'NotAllowedError') toast('Face ID indisponible sur cet appareil'); return; }
+  const prf = cred.getClientExtensionResults?.().prf;
+  let wrap, mode;
+  if (prf?.results?.first){ wrap = await prfKey(new Uint8Array(prf.results.first)); mode = 'prf'; }
+  else {
+    // Pas d'extension PRF : clé locale non exportable, accessible seulement après validation par Face ID.
+    wrap = await crypto.subtle.generateKey({name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']);
+    await idbPut('bio', wrap); mode = 'idb';
+  }
+  const iv = rnd(12);
+  const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, wrap, new TextEncoder().encode(curPin));
+  localStorage.setItem(BIO, JSON.stringify({id:b64(cred.rawId), salt:b64(salt), iv:b64(iv), ct:b64(ct), mode}));
+  drawBioSetting(); toast('Face ID activé');
+}
+function disableBio(){ localStorage.removeItem(BIO); idbDel('bio'); drawBioSetting(); $('btnBio').classList.add('off'); }
+async function unlockBio(){
+  const c = bioCfg(); if (!c){ toast('Déverrouille avec ton code, puis active Face ID dans les réglages'); return; }
+  let a;
+  try {
+    a = await navigator.credentials.get({publicKey:{
+      challenge: rnd(32), rpId: location.hostname, timeout:60000, userVerification:'required',
+      allowCredentials:[{type:'public-key', id: unb64(c.id)}],
+      extensions: c.mode === 'prf' ? {prf:{eval:{first: unb64(c.salt)}}} : {}
+    }});
+  } catch(e){ return; }
+  try {
+    let wrap;
+    if (c.mode === 'prf'){ const r = a.getClientExtensionResults?.().prf?.results?.first; if (!r) throw 0; wrap = await prfKey(new Uint8Array(r)); }
+    else { wrap = await idbGet('bio'); if (!wrap) throw 0; }
+    const pin = new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM', iv: unb64(c.iv)}, wrap, unb64(c.ct)));
+    $('lockMsg').textContent = 'Déverrouillage…';
+    await openVault(pin); curPin = pin; unlocked();
+  } catch(e){ disableBio(); fail('Face ID à réactiver : utilise ton code'); }
+}
+
 /* ---------- Écran de verrouillage ---------- */
 let entry = '', mode = 'unlock', firstPin = '', afterPin = null;
 function setLock(m, msg){
@@ -453,11 +524,11 @@ async function pinDone(){
     key = await derive(pin, salt);
     if (!S) S = fresh();
     await save();
-    if (afterPin){ afterPin(); afterPin = null; }
-    unlocked(); return;
+    if (afterPin){ afterPin(); afterPin = null; if (bioCfg()){ disableBio(); setTimeout(() => toast('Code modifié : réactive Face ID dans les réglages'), 3000); } }
+    curPin = pin; unlocked(); return;
   }
   $('lockMsg').textContent = 'Déverrouillage…';
-  try { await openVault(pin); unlocked(); }
+  try { await openVault(pin); curPin = pin; unlocked(); }
   catch(e){ fail('Code incorrect'); }
 }
 const padBtns = $('pad').querySelectorAll('button');
@@ -470,13 +541,14 @@ padBtns.forEach(b => {
 document.addEventListener('gesturestart', e => e.preventDefault());
 document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
 $('pad').addEventListener('click', e => {
+  if (e.target.closest('#btnBio')) return unlockBio();
   const k = e.target.closest('button')?.dataset.k; if (!k) return;
   if (k === 'del') entry = entry.slice(0, -1);
   else if (entry.length < 6) entry += k;
   drawDots();
   if (entry.length === 6) setTimeout(pinDone, 120);
 });
-function lock(){ key = null; S = null; closeAll(); setLock('unlock'); }
+function lock(){ key = null; S = null; curPin = ''; closeAll(); setLock('unlock'); $('btnBio').classList.toggle('off', !bioOK || !bioCfg()); }
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) hiddenAt = Date.now();
@@ -1061,9 +1133,10 @@ $('fileImport').addEventListener('change', async e => {
 $('btnPin').addEventListener('click', () => { closeAll(); $('app').classList.add('hidden'); afterPin = () => toast('Code modifié'); setLock('setup', 'Nouveau code à 6 chiffres'); });
 $('btnWipe').addEventListener('click', async () => {
   if (!await ask('Effacer définitivement toutes les données de ce téléphone ? Pense à exporter une sauvegarde avant.')) return;
-  localStorage.removeItem(VAULT); S = null; key = null; closeAll(); setLock('setup');
+  localStorage.removeItem(VAULT); disableBio(); S = null; key = null; closeAll(); setLock('setup');
 });
 $('btnLock').addEventListener('click', lock);
+$('btnBioSet').addEventListener('click', async () => { if (bioCfg()){ if (await ask('Désactiver le déverrouillage par Face ID ?')) disableBio(); } else enableBio(); });
 
 /* ---------- Utilitaires d'interface ---------- */
 function show(id){ $(id).classList.remove('hidden'); }
@@ -1105,6 +1178,7 @@ if (!window.isSecureContext || !crypto.subtle){
   $('pad').classList.add('hidden');
 } else {
   setLock(localStorage.getItem(VAULT) ? 'unlock' : 'setup');
+  bioCheck();
 }
 if ('serviceWorker' in navigator && location.protocol === 'https:'){
   const hadSW = !!navigator.serviceWorker.controller;
