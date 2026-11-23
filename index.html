@@ -364,7 +364,7 @@ html,body{overscroll-behavior-y:none}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 3.5 du 23/11/2026.</div>
+  <div class="hint">Version 3.6 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
@@ -674,7 +674,7 @@ const CUR_SYM = {EUR:'€', USD:'$', GBP:'£', CHF:'Fr', JPY:'¥', CAD:'$', AUD:
 function curContent(items){
   const g = {};
   for (const a of items){ const k = (a.cur || S.base).toUpperCase(); (g[k] = g[k] || []).push(a); }
-  return Object.keys(g).sort((x, y) => (y === S.base) - (x === S.base) || sumOf(g[y]) - sumOf(g[x])).map((k, gi) => {
+  return Object.keys(g).sort((x, y) => sumOf(g[y]) - sumOf(g[x])).map((k, gi) => {
     const id = 'compte|cur:' + k, open = openInst.has(id), list = g[k].sort((a, b) => (value(b) || 0) - (value(a) || 0));
     const native = list.reduce((s, a) => s + (num(a.value) || 0), 0);
     const sub = plural(list.length, 'compte') + (k !== S.base ? ' · ' + money(native, k) : '');
@@ -716,7 +716,8 @@ function drawList(){
   }
   const word = {crypto:'wallet', compte:'banque', immo:'mode', societe:'mode'};
   const vm = viewMode();
-  el.innerHTML = `<div class="group"><h3 class="mh"><span>Mes actifs</span><div class="vseg" role="tablist" aria-label="Affichage"><button type="button" data-view="asset" class="${vm === 'asset' ? 'on' : ''}">Par actif</button><button type="button" data-view="inst" class="${vm === 'inst' ? 'on' : ''}">Par banque / wallet</button></div></h3>` + Object.entries(CATS).map(([c, meta]) => {
+  const order = Object.entries(CATS).sort(([a], [b]) => sumOf(S.assets.filter(x => x.cat === b)) - sumOf(S.assets.filter(x => x.cat === a)));
+  el.innerHTML = `<div class="group"><h3 class="mh"><span>Mes actifs</span><div class="vseg" role="tablist" aria-label="Affichage"><button type="button" data-view="asset" class="${vm === 'asset' ? 'on' : ''}">Par actif</button><button type="button" data-view="inst" class="${vm === 'inst' ? 'on' : ''}">Par banque / wallet</button></div></h3>` + order.map(([c, meta]) => {
     const items = S.assets.filter(a => a.cat === c);
     if (!items.length){ openCats.delete(c); return ''; }
     const insts = new Set(items.map(a => a.inst).filter(Boolean)).size;
