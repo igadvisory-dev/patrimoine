@@ -1,6 +1,6 @@
 // Service worker : garde l'app disponible hors ligne.
 // Les appels aux API de prix ne sont jamais mis en cache ici.
-const CACHE = 'patrimoine-v12';
+const CACHE = 'patrimoine-v13';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -18,7 +18,9 @@ self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
   if (e.request.method !== 'GET') return;
   // Logos des cryptos : gardés en cache pour s'afficher hors ligne.
-  if (/(^|\.)coingecko\.com$/.test(url.hostname) && !url.hostname.startsWith('api.')){
+  const isLogo = (/(^|\.)coingecko\.com$/.test(url.hostname) && !url.hostname.startsWith('api.'))
+    || (url.hostname === 'www.google.com' && url.pathname.startsWith('/s2/favicons')) || /(^|\.)gstatic\.com$/.test(url.hostname);
+  if (isLogo){
     e.respondWith(caches.open(CACHE + '-logos').then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { c.put(e.request, r.clone()); return r; }))));
     return;
   }
