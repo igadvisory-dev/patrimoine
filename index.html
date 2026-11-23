@@ -252,6 +252,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
+  <div class="hint">Version 1.6 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -679,7 +680,12 @@ if (!window.isSecureContext || !crypto.subtle){
 } else {
   setLock(localStorage.getItem(VAULT) ? 'unlock' : 'setup');
 }
-if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+if ('serviceWorker' in navigator && location.protocol === 'https:'){
+  const hadSW = !!navigator.serviceWorker.controller;
+  navigator.serviceWorker.register('sw.js', {updateViaCache:'none'}).then(r => r.update()).catch(() => {});
+  // Nouvelle version installée : on recharge tant que l'app est encore verrouillée.
+  navigator.serviceWorker.addEventListener('controllerchange', () => { if (hadSW && !S) location.reload(); });
+}
 if (navigator.storage?.persist) navigator.storage.persist().catch(() => {});
 }
 </script>

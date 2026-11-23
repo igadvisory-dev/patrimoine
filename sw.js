@@ -1,6 +1,6 @@
 // Service worker : garde l'app disponible hors ligne.
 // Les appels aux API de prix ne sont jamais mis en cache ici.
-const CACHE = 'patrimoine-v5';
+const CACHE = 'patrimoine-v6';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -25,7 +25,7 @@ self.addEventListener('fetch', e => {
   if (url.origin !== self.location.origin) return;
   // Réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
   e.respondWith(
-    fetch(e.request).then(r => {
+    fetch(url.href, {cache:'no-store'}).then(r => {
       const copy = r.clone();
       caches.open(CACHE).then(c => c.put(e.request, copy));
       return r;
