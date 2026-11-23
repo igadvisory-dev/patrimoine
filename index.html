@@ -189,6 +189,22 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .sheet.leave>div{transition:transform .3s cubic-bezier(.4,0,.8,.4)}
 .sheet.leave{pointer-events:none}
 @media(prefers-reduced-motion:reduce){.sheet,.sheet>div{transition:none}}
+.fsheet{padding-top:8px!important}
+.fsheet header h2{font-size:22px}
+.fsheet label{margin:10px 0 5px;font-size:12.5px}
+.fsheet input,.fsheet select{min-height:44px;padding:10px 12px}
+.seg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;background:var(--panel2);border-radius:12px;padding:3px;margin-top:6px}
+.seg4 button{padding:8px 2px;border-radius:9px;font-size:13px;color:var(--mute);min-height:36px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.seg4 button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.fsheet .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-20px;padding-right:20px}
+.fsheet .chips::-webkit-scrollbar{display:none}
+.fsheet .chip{flex:none;min-height:38px;padding:7px 13px}
+.fsheet .chosen{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-top:0;padding:6px 6px 6px 12px;min-height:44px}
+.fsheet .chosen .lnk{padding:6px 10px;min-height:32px}
+.actions{display:flex;gap:10px;margin-top:16px}
+.actions .btn{margin-top:0}
+.actions .btn[type=submit]{flex:1}
+.actions .btn.danger{width:auto;padding:14px 16px;border:1px solid color-mix(in srgb,var(--down) 35%,transparent);background:none}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -282,7 +298,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.4 · 24/11/2026</div>
+  <div class="ver">Version 5.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -328,27 +344,29 @@ html,body{overscroll-behavior-y:none}
 </div>
 
 <!-- Ajout / modification d'un actif -->
-<div class="sheet hidden" id="assetSheet"><div>
+<div class="sheet hidden" id="assetSheet"><div class="fsheet">
   <header><h2 id="assetTitle">Nouvel actif</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
-  <div class="seg" id="catSeg"></div>
+  <div class="seg4" id="catSeg"></div>
   <form id="assetForm" autocomplete="off">
-    <label for="fName">Nom</label>
-    <input id="fName" required placeholder="Ex. Livret A, Appartement Lyon…">
+    <div id="cryptoFields">
+      <label for="fCoinQ">Crypto</label>
+      <div class="chosen hidden" id="coinChosen"></div>
+      <input id="fCoinQ" placeholder="Rechercher (ex. bitcoin, ETH)…" inputmode="search">
+      <div class="results hidden" id="coinResults"></div>
+    </div>
+
+    <div id="nameWrap">
+      <label for="fName">Nom</label>
+      <input id="fName" placeholder="Ex. Livret A, Appartement Lyon…">
+    </div>
 
     <label id="lblInst">Banque</label>
     <div class="chips" id="instChips"></div>
     <input id="fInst" class="hidden" placeholder="" aria-labelledby="lblInst" style="margin-top:8px">
 
-    <div id="cryptoFields">
-      <label for="fCoinQ">Crypto</label>
-      <input id="fCoinQ" placeholder="Rechercher (ex. bitcoin, ETH)…" inputmode="search">
-      <div class="results hidden" id="coinResults"></div>
-      <div class="chosen hidden" id="coinChosen"></div>
-      <div class="two">
-        <div><label for="fQty">Quantité</label><input id="fQty" inputmode="decimal" placeholder="0,5"></div>
-        <div><label for="fPrice">Prix unitaire</label><input id="fPrice" inputmode="decimal" placeholder="auto"></div>
-      </div>
-      <div class="hint">Le prix est récupéré automatiquement. Saisis-le seulement si la crypto n'est pas trouvée.</div>
+    <div id="cryptoQty" class="two">
+      <div><label for="fQty">Quantité</label><input id="fQty" inputmode="decimal" placeholder="0,5"></div>
+      <div><label for="fPrice">Prix unitaire</label><input id="fPrice" inputmode="decimal" placeholder="Auto"></div>
     </div>
 
     <div id="valueFields">
@@ -356,22 +374,19 @@ html,body{overscroll-behavior-y:none}
         <div><label for="fValue" id="lblValue">Valeur</label><input id="fValue" inputmode="decimal" placeholder="0"></div>
         <div><label for="fCur">Devise</label><select id="fCur"></select></div>
       </div>
-      <div id="shareWrap">
-        <label for="fShare">Part détenue (%)</label>
-        <input id="fShare" inputmode="decimal" placeholder="100">
-      </div>
-      <div id="debtWrap">
-        <label for="fDebt">Capital restant dû sur le crédit</label>
-        <input id="fDebt" inputmode="decimal" placeholder="0">
-        <div class="hint">Montant total du crédit. Ta part est calculée avec le % détenu, et le bien est compté pour sa valeur nette.</div>
+      <div class="two" id="shareRow">
+        <div id="shareWrap"><label for="fShare">Part détenue (%)</label><input id="fShare" inputmode="decimal" placeholder="100"></div>
+        <div id="debtWrap"><label for="fDebt">Crédit restant dû</label><input id="fDebt" inputmode="decimal" placeholder="0"></div>
       </div>
     </div>
 
     <label for="fNote" id="lblNote">Note (facultatif)</label>
-    <input id="fNote" placeholder="Adresse, n° de parts, remarque…">
+    <input id="fNote" placeholder="Remarque…">
 
-    <button class="btn" type="submit">Enregistrer</button>
-    <button class="btn danger hidden" type="button" id="btnDelete">Supprimer cet actif</button>
+    <div class="actions">
+      <button class="btn danger hidden" type="button" id="btnDelete">Supprimer</button>
+      <button class="btn" type="submit">Enregistrer</button>
+    </div>
   </form>
 </div></div>
 
@@ -1060,7 +1075,7 @@ AMOUNT_IDS.forEach(id => $(id).addEventListener('input', e => {
 
 /* ---------- Feuille actif ---------- */
 let editing = null, cat = 'compte', coin = null, searchT = 0;
-$('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}"><span class="sw" style="background:${m.color}"></span>${m.one}</button>`).join('');
+$('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}">${m.one}</button>`).join('');
 const INST = {crypto:['Wallet / plateforme', 'Ledger, Binance, Coinbase…'], compte:['Banque', 'BNP, Boursorama, Revolut…'], immo:['Mode de détention', 'En direct, SCI…'], societe:['Mode de détention', 'En direct, holding…']};
 let instVal = '', instNew = false;
 function instOptions(){ return [...new Set(S.assets.filter(a => a.cat === cat && a.inst).map(a => a.inst))].sort((a, b) => a.localeCompare(b, 'fr')); }
@@ -1082,21 +1097,29 @@ function setCat(c){
   cat = c;
   [...$('catSeg').children].forEach(b => b.classList.toggle('on', b.dataset.c === c));
   $('cryptoFields').classList.toggle('hidden', c !== 'crypto');
+  $('cryptoQty').classList.toggle('hidden', c !== 'crypto');
   $('valueFields').classList.toggle('hidden', c === 'crypto');
+  $('shareRow').classList.toggle('hidden', c === 'compte');
   $('shareWrap').classList.toggle('hidden', c === 'compte');
   $('debtWrap').classList.toggle('hidden', c !== 'immo');
   $('lblNote').textContent = c === 'immo' ? 'Adresse du bien' : 'Note (facultatif)';
-  $('fNote').placeholder = c === 'immo' ? '12 rue de la Paix, 75002 Paris' : 'N° de parts, remarque…';
+  $('fNote').placeholder = c === 'immo' ? '12 rue de la Paix, 75002 Paris' : 'Remarque…';
+  showCoin();
   $('fNote').autocomplete = c === 'immo' ? 'street-address' : 'off';
   const inst = INST[c]; $('lblInst').textContent = inst[0]; $('fInst').placeholder = inst[1];
   renderInst();
   $('lblValue').textContent = {societe:'Valeur de la société', immo:'Valeur estimée du bien', compte:'Solde'}[c] || 'Valeur';
 }
 $('catSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setCat(b.dataset.c); });
+let coinSearch = false;
 function showCoin(){
-  $('coinChosen').classList.toggle('hidden', !coin);
-  if (coin) $('coinChosen').innerHTML = `${coin.logo || S.logos[coin.id] ? `<img src="${esc(coin.logo || S.logos[coin.id])}" alt=""> ` : ''}<b>${esc(coin.name)}</b> · ${esc(coin.symbol.toUpperCase())} <small style="color:var(--mute)">(${esc(coin.id)})</small>`;
+  const picked = !!coin && !coinSearch;
+  $('coinChosen').classList.toggle('hidden', !picked);
+  $('fCoinQ').classList.toggle('hidden', picked);
+  if (picked) $('coinChosen').innerHTML = `<span style="display:flex;align-items:center;gap:8px;min-width:0">${coin.logo || S.logos[coin.id] ? `<img src="${esc(coin.logo || S.logos[coin.id])}" alt="">` : ''}<b>${esc(coin.name)}</b><span style="color:var(--mute)">${esc(coin.symbol.toUpperCase())}</span></span><button type="button" class="lnk" id="coinChange">Changer</button>`;
+  $('nameWrap').classList.toggle('hidden', cat === 'crypto' && !!coin);
 }
+$('coinChosen').addEventListener('click', e => { if (e.target.closest('#coinChange')){ coinSearch = true; showCoin(); $('fCoinQ').focus(); } });
 $('fCoinQ').addEventListener('input', e => {
   clearTimeout(searchT);
   const q = e.target.value.trim(), box = $('coinResults');
@@ -1113,11 +1136,12 @@ $('fCoinQ').addEventListener('input', e => {
 });
 $('coinResults').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s, logo:b.dataset.l};
+  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s, logo:b.dataset.l}; coinSearch = false;
   if (!$('fName').value) $('fName').value = coin.name;
   $('coinResults').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
 });
 function openAsset(a){
+  coinSearch = false;
   editing = a || null; coin = a?.coinId ? {id:a.coinId, name:a.coinName || a.name, symbol:a.symbol || ''} : null;
   $('assetTitle').textContent = a ? 'Modifier' : 'Nouvel actif';
   $('fName').value = a?.name || ''; $('fInst').value = ''; instNew = false; instVal = a?.inst || ''; $('fQty').value = a?.qty ?? ''; $('fPrice').value = a?.price ?? '';
@@ -1144,7 +1168,8 @@ $('list').addEventListener('click', e => {
 $('assetForm').addEventListener('submit', async e => {
   e.preventDefault();
   const a = editing || {id:uid()};
-  a.cat = cat; a.name = $('fName').value.trim(); a.inst = instNew ? $('fInst').value.trim() : instVal; a.note = $('fNote').value.trim();
+  a.cat = cat; a.name = (cat === 'crypto' && coin) ? coin.name : $('fName').value.trim();
+  if (!a.name){ toast('Indique un nom'); return; } a.inst = instNew ? $('fInst').value.trim() : instVal; a.note = $('fNote').value.trim();
   if (cat === 'crypto'){
     if (!coin && num($('fPrice').value) == null){ toast('Choisis une crypto ou saisis un prix'); return; }
     if (num($('fQty').value) == null){ toast('Indique la quantité'); return; }
