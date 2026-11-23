@@ -323,7 +323,7 @@ html,body{overscroll-behavior-y:none}
     <div id="valueFields">
       <div class="two">
         <div><label for="fValue" id="lblValue">Valeur</label><input id="fValue" inputmode="decimal" placeholder="0"></div>
-        <div><label for="fCur">Devise</label><input id="fCur" list="curList" maxlength="3" placeholder="EUR" style="text-transform:uppercase"></div>
+        <div><label for="fCur">Devise</label><select id="fCur"></select></div>
       </div>
       <div id="shareWrap">
         <label for="fShare">Part détenue (%)</label>
@@ -343,7 +343,7 @@ html,body{overscroll-behavior-y:none}
 <div class="sheet hidden" id="setSheet"><div>
   <header><h2>Réglages</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
   <div class="setrow"><span>Apparence</span><div class="theme" id="sTheme"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Jour</button><button type="button" data-t="dark">Nuit</button></div></div>
-  <div class="setrow"><span>Devise de référence</span><select id="sBase" style="width:110px"></select></div>
+  <div class="setrow"><span>Devise de référence</span><select id="sBase" style="width:auto;max-width:62%"></select></div>
   <div class="setrow" style="display:block">
     <div>Taux de change</div>
     <div class="hint" id="fxInfo"></div>
@@ -355,8 +355,8 @@ html,body{overscroll-behavior-y:none}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 3.1 du 23/11/2026.</div>
-  <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
+  <div class="hint">Version 3.2 du 23/11/2026.</div>
+  <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
 <!-- Dialogue de confirmation -->
@@ -367,7 +367,7 @@ html,body{overscroll-behavior-y:none}
 </div></div>
 
 <div id="toast" class="hidden"></div>
-<datalist id="curList"><option>EUR</option><option>USD</option><option>GBP</option><option>CHF</option><option>CAD</option><option>JPY</option><option>AUD</option><option>SEK</option><option>NOK</option><option>DKK</option><option>PLN</option><option>CNY</option><option>HKD</option><option>SGD</option></datalist>
+
 
 <script>
 {
@@ -377,7 +377,21 @@ const CATS = {
   immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#b98b73', ini:'I'},
   compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#6aa99b', ini:'€'}
 };
-const BASES = ['EUR','USD','GBP','CHF','CAD'];
+// Principales devises (nom affiché). « crypto » : devise de référence possible (prix CoinGecko disponibles).
+const CURRENCIES = [
+  ['EUR','Euro',1],['USD','Dollar américain',1],['GBP','Livre sterling',1],['CHF','Franc suisse',1],['AED','Dirham des Émirats',1],
+  ['CAD','Dollar canadien',1],['AUD','Dollar australien',1],['NZD','Dollar néo-zélandais',1],['JPY','Yen japonais',1],['CNY','Yuan chinois',1],
+  ['HKD','Dollar de Hong Kong',1],['SGD','Dollar de Singapour',1],['KRW','Won sud-coréen',1],['INR','Roupie indienne',1],['THB','Baht thaïlandais',1],
+  ['SAR','Riyal saoudien',1],['QAR','Riyal qatarien',0],['KWD','Dinar koweïtien',1],['BHD','Dinar bahreïni',1],['OMR','Rial omanais',0],
+  ['ILS','Shekel israélien',1],['TRY','Livre turque',1],['SEK','Couronne suédoise',1],['NOK','Couronne norvégienne',1],['DKK','Couronne danoise',1],
+  ['PLN','Złoty polonais',1],['CZK','Couronne tchèque',1],['HUF','Forint hongrois',1],['RON','Leu roumain',0],['MAD','Dirham marocain',0],
+  ['TND','Dinar tunisien',0],['EGP','Livre égyptienne',0],['XOF','Franc CFA (UEMOA)',0],['XAF','Franc CFA (CEMAC)',0],['ZAR','Rand sud-africain',1],
+  ['BRL','Real brésilien',1],['MXN','Peso mexicain',1]
+];
+const CUR_NAME = Object.fromEntries(CURRENCIES.map(c => [c[0], c[1]]));
+const BASES = CURRENCIES.filter(c => c[2]).map(c => c[0]);
+// Devises à parité fixe : taux de secours si le service n'en donne pas.
+const PEGS = {AED:['USD',3.6725], SAR:['USD',3.75], QAR:['USD',3.64], BHD:['USD',0.376], OMR:['USD',0.3845], XOF:['EUR',655.957], XAF:['EUR',655.957]};
 const VAULT = 'patrimoine.vault.v1';
 const $ = id => document.getElementById(id);
 const esc = s => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
@@ -560,9 +574,22 @@ const CUR_BADGE = {
   SEK: mkCoin('#006AA7', glyph('kr', 24, 41, '#FECC00')),
   NOK: mkCoin('#BA0C2F', glyph('kr', 24, 41)),
   DKK: mkCoin('#C60C30', glyph('kr', 24, 41)),
-  PLN: mkCoin('#DC143C', glyph('zł', 24, 41))
+  PLN: mkCoin('#DC143C', glyph('zł', 24, 41)),
+  AED: mkCoin('#00732F', '<path d="M0 32a32 32 0 0 1 12-25v50A32 32 0 0 1 0 32z" fill="#FF0000"/>' + glyph('AED', 15, 38)),
+  SAR: mkCoin('#006C35', glyph('SAR', 15, 38)),
+  INR: mkCoin('#FF9933', glyph('₹', 30, 43)),
+  KRW: mkCoin('#003478', glyph('₩', 30, 43)),
+  TRY: mkCoin('#E30A17', glyph('₺', 30, 43)),
+  ILS: mkCoin('#0038B8', glyph('₪', 30, 43)),
+  THB: mkCoin('#2D2A4A', glyph('฿', 30, 43)),
+  BRL: mkCoin('#009C3B', glyph('R$', 24, 41, '#FFDF00')),
+  ZAR: mkCoin('#007749', glyph('R', 30, 43, '#FFB81C')),
+  HKD: mkCoin('#DE2910', glyph('$', 32, 44)),
+  SGD: mkCoin('#EF3340', glyph('$', 32, 44)),
+  NZD: mkCoin('#00247D', glyph('$', 32, 44)),
+  MXN: mkCoin('#006847', glyph('$', 32, 44))
 };
-const curBadge = k => CUR_BADGE[(k || '').toUpperCase()] || '';
+const curBadge = k => { k = (k || '').toUpperCase(); return CUR_BADGE[k] || (k ? mkCoin('#5E6D7E', glyph(esc(k), 15, 38)) : ''); };
 const catBadge = c => c === 'compte' ? curBadge(S.base) : CAT_BADGE[c];
 const openCats = new Set();
 const viewMode = () => S.view || (S.cryptoView === 'wallet' ? 'inst' : 'asset');
@@ -780,10 +807,15 @@ async function doRefresh(quiet, auto){
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()).concat(BASES))].filter(c => c !== S.base);
   // Les taux de change (BCE) ne changent qu'une fois par jour : en automatique, une fois par heure suffit.
   if (curs.length && !(auto && Date.now() - (S.fx.t || 0) < 3600000)){
-    const urls = ['https://api.frankfurter.dev/v1/latest?base=' + S.base, 'https://api.frankfurter.app/latest?from=' + S.base];
+    const urls = ['https://open.er-api.com/v6/latest/' + S.base, 'https://api.frankfurter.dev/v1/latest?base=' + S.base, 'https://api.frankfurter.app/latest?from=' + S.base];
     okF = false;
     for (const u of urls){
-      try { const d = await getJSON(u); if (d.rates && S){ Object.assign(S.fx.rates, d.rates); S.fx.t = Date.now(); okF = true; break; } } catch(e){}
+      try { const d = await getJSON(u); if (d.rates && S){ Object.assign(S.fx.rates, d.rates); delete S.fx.rates[S.base]; S.fx.t = Date.now(); okF = true; break; } } catch(e){}
+    }
+    for (const [c, [anchor, k]] of Object.entries(PEGS)){
+      if (c === S.base || S.fx.rates[c]) continue;
+      const ar = anchor === S.base ? 1 : S.fx.rates[anchor];
+      if (ar) S.fx.rates[c] = ar * k;
     }
   }
   $('btnRefresh').textContent = 'Actualiser les prix';
@@ -899,7 +931,8 @@ function openAsset(a){
   editing = a || null; coin = a?.coinId ? {id:a.coinId, name:a.coinName || a.name, symbol:a.symbol || ''} : null;
   $('assetTitle').textContent = a ? 'Modifier' : 'Nouvel actif';
   $('fName').value = a?.name || ''; $('fInst').value = ''; instNew = false; instVal = a?.inst || ''; $('fQty').value = a?.qty ?? ''; $('fPrice').value = a?.price ?? '';
-  $('fValue').value = a?.value ?? ''; $('fCur').value = a?.cur || S.base; $('fShare').value = a?.share ?? ''; $('fNote').value = a?.note || '';
+  $('fValue').value = a?.value ?? '';
+  { const cv = (a?.cur || S.base).toUpperCase(); if (![...$('fCur').options].some(o => o.value === cv)) $('fCur').insertAdjacentHTML('beforeend', `<option value="${esc(cv)}">${esc(cv)}</option>`); $('fCur').value = cv; } $('fShare').value = a?.share ?? ''; $('fNote').value = a?.note || '';
   $('fCoinQ').value = ''; $('coinResults').classList.add('hidden'); showCoin();
   $('btnDelete').classList.toggle('hidden', !a);
   setCat(a?.cat || cat); show('assetSheet');
@@ -943,7 +976,8 @@ $('btnDelete').addEventListener('click', async () => {
 });
 
 /* ---------- Réglages ---------- */
-$('sBase').innerHTML = BASES.map(c => `<option>${c}</option>`).join('');
+$('sBase').innerHTML = BASES.map(c => `<option value="${c}">${c} · ${CUR_NAME[c]}</option>`).join('');
+$('fCur').innerHTML = CURRENCIES.map(([c, n]) => `<option value="${c}">${c} · ${n}</option>`).join('');
 function drawFx(){
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()))].filter(c => c !== S.base);
   $('fxInfo').textContent = curs.length ? `Pour 1 ${S.base}. Automatique${S.fx.t ? ' (' + when(S.fx.t) + ')' : ''} ; remplis « manuel » pour forcer un taux.` : 'Aucune devise étrangère utilisée pour l\'instant.';
