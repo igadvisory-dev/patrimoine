@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -31,7 +31,8 @@
   --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
 }
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
-*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
+*{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent;touch-action:manipulation}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
 body{font:300 16px/1.45 var(--sans);overflow-x:clip;-webkit-font-smoothing:antialiased;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
@@ -54,8 +55,16 @@ label{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px;letter-sp
 .dots.err{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pad{display:grid;grid-template-columns:repeat(3,78px);gap:18px;margin-top:8px}
-.pad button{height:78px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);font:300 30px var(--sans)}
-.pad button:active{background:rgba(195,204,215,.22)}
+.pad button{position:relative;overflow:hidden;height:78px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);font:300 30px var(--sans);transition:transform .18s cubic-bezier(.2,.8,.2,1),background .25s;-webkit-user-select:none;user-select:none}
+.pad button.press{transform:scale(.9);background:rgba(195,204,215,.32);transition:transform .06s,background .06s}
+.pad button::after{content:"";position:absolute;inset:0;border-radius:50%;background:radial-gradient(circle,rgba(255,255,255,.35) 0,rgba(255,255,255,0) 70%);opacity:0;transform:scale(.3)}
+.pad button.ripple::after{animation:rip .45s ease-out}
+@keyframes rip{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(1.4)}}
+.pad .ghost.press{background:rgba(255,255,255,.08)}
+.dots i.on{animation:pop .22s ease-out}
+@keyframes pop{0%{transform:scale(.4)}60%{transform:scale(1.35)}100%{transform:scale(1)}}
+#lock{-webkit-user-select:none;user-select:none}
+@media(prefers-reduced-motion:reduce){.pad button,.pad button.press{transition:none;transform:none}.pad button.ripple::after,.dots i.on{animation:none}}
 .pad .ghost{background:none;border:0;font-size:20px;color:#9aa7b6}
 
 /* Structure */
@@ -275,7 +284,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 1.8 du 23/11/2026.</div>
+  <div class="hint">Version 1.9 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -356,6 +365,15 @@ async function pinDone(){
   try { await openVault(pin); unlocked(); }
   catch(e){ fail('Code incorrect'); }
 }
+const padBtns = $('pad').querySelectorAll('button');
+padBtns.forEach(b => {
+  b.addEventListener('pointerdown', () => { b.classList.add('press'); b.classList.remove('ripple'); void b.offsetWidth; b.classList.add('ripple'); });
+  ['pointerup', 'pointerleave', 'pointercancel'].forEach(ev => b.addEventListener(ev, () => b.classList.remove('press')));
+  b.addEventListener('animationend', () => b.classList.remove('ripple'));
+});
+// Empêche le zoom par pincement et par double-tap (iOS).
+document.addEventListener('gesturestart', e => e.preventDefault());
+document.addEventListener('dblclick', e => e.preventDefault(), {passive:false});
 $('pad').addEventListener('click', e => {
   const k = e.target.closest('button')?.dataset.k; if (!k) return;
   if (k === 'del') entry = entry.slice(0, -1);
