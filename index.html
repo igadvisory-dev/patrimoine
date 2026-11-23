@@ -6,11 +6,11 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Patrimoine">
+<meta name="apple-mobile-web-app-title" content="Patrimony">
 <meta name="theme-color" content="#07131f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
-<title>Patrimoine</title>
+<title>Patrimony</title>
 <style>
 /* Charte IG Advisory : blanc, bleu marine profond, accents argentés, titres en Bodoni. */
 :root{
@@ -249,7 +249,7 @@ html,body{overscroll-behavior-y:none}
 
 <div id="lock">
   <div class="mark"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" fill="#ffffff"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" stroke="#0f2a44" stroke-opacity=".35"/><g fill="#0f2a44"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g fill="#ffffff"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg></div>
-  <h1 id="lockTitle">Patrimoine</h1>
+  <h1 id="lockTitle">Patrimony</h1>
   <div id="lockMsg"></div>
   <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
   <div class="pad" id="pad">
@@ -365,7 +365,7 @@ html,body{overscroll-behavior-y:none}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 3.9 du 23/11/2026.</div>
+  <div class="hint">Version 4.0 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
@@ -437,7 +437,7 @@ function migrate(s){ const f = fresh(); return Object.assign(f, s, {fx:Object.as
 let entry = '', mode = 'unlock', firstPin = '', afterPin = null;
 function setLock(m, msg){
   mode = m; entry = ''; drawDots();
-  $('lockTitle').textContent = {unlock:'Patrimoine', setup:'Choisis un code', confirm:'Confirme le code'}[m];
+  $('lockTitle').textContent = {unlock:'Patrimony', setup:'Choisis un code', confirm:'Confirme le code'}[m];
   $('lockMsg').textContent = msg || (m === 'setup' ? '6 chiffres. Il chiffre tes données : sans lui, elles sont perdues.' : '');
   $('lock').classList.remove('hidden'); $('app').classList.add('hidden');
 }
@@ -1041,7 +1041,7 @@ $('sBase').addEventListener('change', async e => {
 });
 $('btnExport').addEventListener('click', async () => {
   const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
-  const name = 'patrimoine-' + today() + '.json';
+  const name = 'patrimony-' + today() + '.json';
   const file = new File([blob], name, {type:'application/json'});
   try {
     if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); return; }
