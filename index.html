@@ -174,6 +174,11 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .addr{display:inline-flex;align-items:flex-start;gap:6px;color:var(--gold);font-weight:500;text-align:right;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--gold) 35%,transparent);text-underline-offset:3px;padding:0;max-width:70%}
 .addr svg{width:16px;height:16px;flex:none;margin-top:2px}
 a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
+.instb.more{border-top:1px solid var(--line)}
+.morebtn{display:flex;align-items:center;gap:6px;width:100%;padding:12px 0;min-height:44px;color:var(--gold);font-size:14px;font-weight:500;text-align:left}
+.morebtn .chev{color:var(--gold)!important}
+.instb.more .drill2-in{padding-left:0}
+.instb.more .drill2-in>.kv:first-child{border-top:0}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -267,7 +272,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.0 · 24/11/2026</div>
+  <div class="ver">Version 5.1 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -647,8 +652,10 @@ function immoRow(a){
     (sh !== 100 ? kv('Valeur nette du bien', money(val - debt, cur)) + kv('Part détenue', qty(sh) + ' %') : '') +
     (cur !== S.base ? kv('Ta part', money((val - debt) * sh / 100, cur)) : '') +
     kv(sh !== 100 ? 'Ta part nette' : 'Valeur nette', v == null ? '—' : money(v), 'tot') +
-    (a.inst ? kv('Mode de détention', esc(a.inst)) : '') +
-    (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : '') +
+    ((a.inst || a.note) ? (() => { const mid = 'immo|more:' + a.id, mo = openInst.has(mid); return `<div class="instb more${mo ? ' open' : ''}" data-k="${esc(mid)}"><button class="instrow morebtn" type="button" aria-expanded="${mo}">Autres informations<span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">` +
+      (a.inst ? kv('Mode de détention', esc(a.inst)) : '') +
+      (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : '') +
+      `</div></div></div>`; })() : '') +
     `<button class="drill-add" type="button" data-edit="${a.id}">Modifier ce bien</button>`;
   return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}"><button class="row instrow sub" aria-expanded="${open}"><span class="ico badge">${HOUSE_BADGE}</span><div class="nm"><div>${esc(a.name)}</div></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${lines}</div></div></div>`;
 }
