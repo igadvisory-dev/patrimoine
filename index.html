@@ -140,8 +140,11 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .drill .inst{margin-top:10px}
 .drill .inst:first-child{margin-top:4px}
 .row.sub{min-height:52px}
-.vseg{display:flex;gap:3px;background:var(--panel2);border-radius:11px;padding:3px;margin:6px 0 4px;max-width:260px}
-.vseg button{flex:1;padding:7px 10px;border-radius:8px;font-size:13px;color:var(--mute);min-height:34px;transition:background .2s,color .2s}
+.group h3.mh{align-items:center;padding-bottom:10px;flex-wrap:wrap;row-gap:8px}
+.group h3.mh>span{white-space:nowrap}
+@media(max-width:390px){.card{padding:16px 14px}.vseg button{padding:6px 7px;font-size:12px}.group h3.mh{gap:6px}}
+.vseg{display:flex;gap:2px;background:var(--panel2);border-radius:10px;padding:3px;margin-left:auto;flex:none}
+.vseg button{padding:6px 10px;border-radius:8px;font-size:12.5px;letter-spacing:0;color:var(--mute);min-height:32px;white-space:nowrap;transition:background .2s,color .2s}
 .vseg button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.15)}
 .drill-add{display:block;width:100%;text-align:left;color:var(--gold);font-size:14px;font-weight:500;padding:12px 0 16px;min-height:44px}
 .cat.anim .drill-in>.row,.cat.anim .drill-in>.drill-add,.cat.anim .inst>*{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms + 60ms)}
@@ -292,7 +295,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 2.1 du 23/11/2026.</div>
+  <div class="hint">Version 2.2 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -480,6 +483,7 @@ function assetRow(a){
 const sumOf = items => items.reduce((s, a) => s + (value(a) || 0), 0);
 const plural = (n, w) => n + ' ' + w + (n > 1 ? 's' : '');
 const openCats = new Set();
+const viewMode = () => S.view || (S.cryptoView === 'wallet' ? 'inst' : 'asset');
 function coinRows(items){
   const g = {};
   for (const a of items){ const k = a.coinId || ('m:' + (a.symbol || a.name).toLowerCase()); (g[k] = g[k] || []).push(a); }
@@ -494,11 +498,9 @@ function coinRows(items){
 }
 function catContent(c){
   const items = S.assets.filter(a => a.cat === c).sort((a, b) => (value(b) || 0) - (value(a) || 0));
-  if (c === 'crypto'){
-    const view = S.cryptoView || 'coin';
-    const seg = `<div class="vseg" role="tablist"><button type="button" data-view="coin" class="${view === 'coin' ? 'on' : ''}">Par crypto</button><button type="button" data-view="wallet" class="${view === 'wallet' ? 'on' : ''}">Par wallet</button></div>`;
-    if (view === 'coin') return seg + coinRows(items) + `<button class="drill-add" type="button" data-add="crypto" style="--i:${items.length}">+ Ajouter une crypto</button>`;
-    return seg + walletContent(c, items);
+  if (viewMode() === 'asset'){
+    const rows = c === 'crypto' ? coinRows(items) : items.map((a, i) => assetRow(a).replace('<button class="row"', `<button style="--i:${i}" class="row sub"`)).join('');
+    return rows + `<button class="drill-add" type="button" data-add="${c}" style="--i:${items.length}">+ Ajouter ${{crypto:'une crypto', compte:'un compte', immo:'un bien', societe:'une société'}[c]}</button>`;
   }
   return walletContent(c, items);
 }
@@ -520,7 +522,8 @@ function drawList(){
     return;
   }
   const word = {crypto:'wallet', compte:'banque', immo:'mode', societe:'mode'};
-  el.innerHTML = '<div class="group"><h3><span>Mes actifs</span><span></span></h3>' + Object.entries(CATS).map(([c, meta]) => {
+  const vm = viewMode();
+  el.innerHTML = `<div class="group"><h3 class="mh"><span>Mes actifs</span><div class="vseg" role="tablist" aria-label="Affichage"><button type="button" data-view="asset" class="${vm === 'asset' ? 'on' : ''}">Par actif</button><button type="button" data-view="inst" class="${vm === 'inst' ? 'on' : ''}">Par banque / wallet</button></div></h3>` + Object.entries(CATS).map(([c, meta]) => {
     const items = S.assets.filter(a => a.cat === c);
     if (!items.length){ openCats.delete(c); return ''; }
     const insts = new Set(items.map(a => a.inst).filter(Boolean)).size;
@@ -693,8 +696,8 @@ $('list').addEventListener('click', e => {
   const c = e.target.closest('.catrow'); if (c) return toggleCat(c.dataset.cat);
   const add = e.target.closest('.drill-add'); if (add){ cat = add.dataset.add; return openAsset(null); }
   const v = e.target.closest('.vseg button');
-  if (v){ if (S.cryptoView !== v.dataset.view){ S.cryptoView = v.dataset.view; drawList(); save().catch(() => {}); } return; }
-  if (e.target.closest('.row[data-multi]')){ S.cryptoView = 'wallet'; drawList(); save().catch(() => {}); toast('Détail par wallet'); return; }
+  if (v){ if (viewMode() !== v.dataset.view){ S.view = v.dataset.view; drawList(); save().catch(() => {}); } return; }
+  if (e.target.closest('.row[data-multi]')){ S.view = 'inst'; drawList(); save().catch(() => {}); toast('Détail par wallet'); return; }
   const r = e.target.closest('.row[data-id]'); if (r) openAsset(S.assets.find(a => a.id === r.dataset.id));
 });
 $('assetForm').addEventListener('submit', async e => {
