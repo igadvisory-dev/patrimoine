@@ -329,6 +329,11 @@ html,body{overscroll-behavior-y:none}
         <label for="fShare">Part détenue (%)</label>
         <input id="fShare" inputmode="decimal" placeholder="100">
       </div>
+      <div id="debtWrap">
+        <label for="fDebt">Capital restant dû sur le crédit</label>
+        <input id="fDebt" inputmode="decimal" placeholder="0">
+        <div class="hint">Montant total du crédit. Ta part est calculée avec le % détenu, et le bien est compté pour sa valeur nette.</div>
+      </div>
     </div>
 
     <label for="fNote">Note (facultatif)</label>
@@ -355,7 +360,7 @@ html,body{overscroll-behavior-y:none}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 3.2 du 23/11/2026.</div>
+  <div class="hint">Version 3.3 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
@@ -493,7 +498,8 @@ function value(a){
   }
   const r = rate(a.cur); if (!r) return null;
   const share = a.cat === 'compte' ? 100 : (num(a.share) ?? 100);
-  return (num(a.value) || 0) * share / 100 / r;
+  const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
+  return ((num(a.value) || 0) - debt) * share / 100 / r;
 }
 function totals(){
   const by = {crypto:0, societe:0, immo:0, compte:0}; let total = 0, missing = 0;
@@ -548,7 +554,9 @@ function assetRow(a){
     sub = qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase()) + (p != null ? ' × ' + money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0) : ' · prix inconnu');
   } else {
     const cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100;
-    sub = (cur !== S.base || (a.cat !== 'compte' && sh !== 100)) ? money(num(a.value) || 0, cur) + (a.cat !== 'compte' && sh !== 100 ? ' · ' + qty(sh) + ' %' : '') : '';
+    const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
+    sub = debt ? 'Valeur ' + money(num(a.value) || 0, cur) + ' · Crédit ' + money(debt, cur) + (sh !== 100 ? ' · ' + qty(sh) + ' %' : '')
+      : (cur !== S.base || (a.cat !== 'compte' && sh !== 100)) ? money(num(a.value) || 0, cur) + (a.cat !== 'compte' && sh !== 100 ? ' · ' + qty(sh) + ' %' : '') : '';
     if (!rate(cur)) sub += ' · taux ' + esc(cur) + ' manquant';
   }
   if (a.note) sub += (sub ? ' · ' : '') + esc(a.note);
@@ -898,6 +906,7 @@ function setCat(c){
   $('cryptoFields').classList.toggle('hidden', c !== 'crypto');
   $('valueFields').classList.toggle('hidden', c === 'crypto');
   $('shareWrap').classList.toggle('hidden', c === 'compte');
+  $('debtWrap').classList.toggle('hidden', c !== 'immo');
   const inst = INST[c]; $('lblInst').textContent = inst[0]; $('fInst').placeholder = inst[1];
   renderInst();
   $('lblValue').textContent = {societe:'Valeur de la société', immo:'Valeur estimée du bien', compte:'Solde'}[c] || 'Valeur';
@@ -932,7 +941,7 @@ function openAsset(a){
   $('assetTitle').textContent = a ? 'Modifier' : 'Nouvel actif';
   $('fName').value = a?.name || ''; $('fInst').value = ''; instNew = false; instVal = a?.inst || ''; $('fQty').value = a?.qty ?? ''; $('fPrice').value = a?.price ?? '';
   $('fValue').value = a?.value ?? '';
-  { const cv = (a?.cur || S.base).toUpperCase(); if (![...$('fCur').options].some(o => o.value === cv)) $('fCur').insertAdjacentHTML('beforeend', `<option value="${esc(cv)}">${esc(cv)}</option>`); $('fCur').value = cv; } $('fShare').value = a?.share ?? ''; $('fNote').value = a?.note || '';
+  { const cv = (a?.cur || S.base).toUpperCase(); if (![...$('fCur').options].some(o => o.value === cv)) $('fCur').insertAdjacentHTML('beforeend', `<option value="${esc(cv)}">${esc(cv)}</option>`); $('fCur').value = cv; } $('fShare').value = a?.share ?? ''; $('fDebt').value = a?.debt ?? ''; $('fNote').value = a?.note || '';
   $('fCoinQ').value = ''; $('coinResults').classList.add('hidden'); showCoin();
   $('btnDelete').classList.toggle('hidden', !a);
   setCat(a?.cat || cat); show('assetSheet');
@@ -962,6 +971,7 @@ $('assetForm').addEventListener('submit', async e => {
     const cur = ($('fCur').value.trim() || S.base).toUpperCase();
     if (!/^[A-Z]{3}$/.test(cur)){ toast('Devise sur 3 lettres (EUR, USD…)'); return; }
     a.value = $('fValue').value.trim(); a.cur = cur; a.share = cat === 'compte' ? '' : $('fShare').value.trim();
+    if (cat === 'immo' && num($('fDebt').value)) a.debt = $('fDebt').value.trim(); else delete a.debt;
     delete a.qty; delete a.price; delete a.coinId; delete a.symbol; delete a.coinName;
   }
   if (!editing) S.assets.push(a);
