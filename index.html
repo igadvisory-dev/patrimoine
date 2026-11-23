@@ -267,7 +267,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 4.5 · 24/11/2026</div>
+  <div class="ver">Version 4.6 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -643,10 +643,10 @@ function immoRow(a){
   const id = 'immo|a:' + a.id, open = openInst.has(id);
   const sub = [debt ? 'Crédit ' + money(debt, cur) : 'Sans crédit', sh !== 100 ? qty(sh) + ' %' : '', a.note ? esc(a.note) : ''].filter(Boolean).join(' · ');
   const kv = (k, x, cls = '') => `<div class="kv ${cls}"><span>${k}</span><b class="num">${x}</b></div>`;
-  const lines = kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '− ' + money(debt, cur) : 'Aucun') +
+  const lines = kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '(' + money(debt, cur) + ')' : 'Aucun') +
     (sh !== 100 ? kv('Valeur nette du bien', money(val - debt, cur)) + kv('Part détenue', qty(sh) + ' %') : '') +
     (a.inst ? kv('Mode de détention', esc(a.inst)) : '') +
-    (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>${esc(a.note)}</button></div>` : '') +
+    (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : '') +
     (cur !== S.base ? kv('Ta part en ' + cur, money((val - debt) * sh / 100, cur)) : '') +
     kv(sh !== 100 ? 'Ta part nette' : 'Valeur nette', v == null ? '—' : money(v), 'tot') +
     `<button class="drill-add" type="button" data-edit="${a.id}">Modifier ce bien</button>`;
