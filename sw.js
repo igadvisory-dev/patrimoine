@@ -1,6 +1,6 @@
 // Service worker : garde l'app disponible hors ligne.
 // Les appels aux API de prix ne sont jamais mis en cache ici.
-const CACHE = 'patrimoine-v4';
+const CACHE = 'patrimoine-v5';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {
@@ -9,14 +9,20 @@ self.addEventListener('install', e => {
 
 self.addEventListener('activate', e => {
   e.waitUntil(
-    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE).map(k => caches.delete(k))))
+    caches.keys().then(keys => Promise.all(keys.filter(k => k !== CACHE && !k.endsWith('-logos')).map(k => caches.delete(k))))
       .then(() => self.clients.claim())
   );
 });
 
 self.addEventListener('fetch', e => {
   const url = new URL(e.request.url);
-  if (e.request.method !== 'GET' || url.origin !== self.location.origin) return;
+  if (e.request.method !== 'GET') return;
+  // Logos des cryptos : gardés en cache pour s'afficher hors ligne.
+  if (/(^|\.)coingecko\.com$/.test(url.hostname) && !url.hostname.startsWith('api.')){
+    e.respondWith(caches.open(CACHE + '-logos').then(c => c.match(e.request).then(hit => hit || fetch(e.request).then(r => { c.put(e.request, r.clone()); return r; }))));
+    return;
+  }
+  if (url.origin !== self.location.origin) return;
   // Réseau d'abord (pour recevoir les mises à jour), cache si hors ligne.
   e.respondWith(
     fetch(e.request).then(r => {

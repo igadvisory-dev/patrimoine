@@ -68,7 +68,6 @@ header.top h1 svg{width:26px;height:26px}
 main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .hero{padding:18px 4px 6px}
 .total{font:400 clamp(40px,12vw,56px)/1.02 var(--serif);letter-spacing:-.01em}
-.total .cts{color:var(--mute)}
 .delta{display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-top:12px;padding:5px 10px;border-radius:99px;background:var(--panel2)}
 .delta:empty{display:none}
 .delta.up{color:var(--up)}.delta.down{color:var(--down)}
@@ -104,7 +103,10 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .group+.group{margin-top:16px}
 .row{display:flex;align-items:center;gap:12px;padding:11px 0;width:100%;text-align:left;min-height:58px}
 .row+.row{border-top:1px solid var(--line)}
-.ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;font:500 15px var(--serif)}
+.ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;font:500 15px var(--serif);overflow:hidden}
+.ico.logo{background:var(--panel2)!important;border-radius:50%}
+.ico img{width:28px;height:28px;border-radius:50%;display:block}
+.results img,.chosen img{width:24px;height:24px;border-radius:50%;vertical-align:middle;flex:none}
 .row .nm{flex:1;overflow:hidden}
 .row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
 .row small{display:block;color:var(--mute);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
@@ -300,7 +302,7 @@ async function openVault(pin){
   key = k; salt = unb64(v.salt);
   S = migrate(JSON.parse(new TextDecoder().decode(pt)));
 }
-function fresh(){ return {v:1, base:'EUR', assets:[], prices:{}, fx:{rates:{}, t:0, manual:{}}, history:[]}; }
+function fresh(){ return {v:1, base:'EUR', assets:[], prices:{}, logos:{}, fx:{rates:{}, t:0, manual:{}}, history:[]}; }
 function migrate(s){ const f = fresh(); return Object.assign(f, s, {fx:Object.assign(f.fx, s.fx || {})}); }
 
 /* ---------- Écran de verrouillage ---------- */
@@ -381,7 +383,7 @@ function snapshot(){
 async function commit(){ snapshot(); render(); try { await save(); } catch(e){ toast('Enregistrement impossible'); } }
 
 /* ---------- Format ---------- */
-const money = (v, cur = S.base, d) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, maximumFractionDigits:d ?? (Math.abs(v) >= 1000 ? 0 : 2)}).format(v);
+const money = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
 const qty = v => new Intl.NumberFormat('fr-FR', {maximumFractionDigits:8}).format(v);
 const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
 const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
@@ -390,8 +392,7 @@ const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-d
 function render(){
   if (!S) return;
   const t = totals();
-  { const f = money(t.total, S.base, 2), m = f.match(/^(.*?)([,.]\d{2})(\D*)$/);
-    $('total').innerHTML = m ? esc(m[1]) + '<span class="cts">' + esc(m[2]) + '</span>' + esc(m[3]) : esc(f); }
+  $('total').textContent = money(t.total);
   const hist = S.history.filter(h => h.base === S.base);
   const ref = hist.filter(h => h.d <= new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE')).pop() || (hist.length > 1 ? hist[0] : null);
   const dl = $('delta');
@@ -404,6 +405,14 @@ function render(){
   drawChart(); drawDonut(t); drawList();
 }
 
+function icon(a){
+  const logo = a.cat === 'crypto' && (S.logos[a.coinId] || a.logo);
+  const letter = a.cat === 'crypto' && a.symbol ? esc(a.symbol.slice(0, 1).toUpperCase()) : CATS[a.cat].ini;
+  const st = `background:color-mix(in srgb,${CATS[a.cat].hex} 16%,transparent);color:${CATS[a.cat].hex}`;
+  return logo && /^https:\/\//.test(logo)
+    ? `<span class="ico logo" style="${st}" data-l="${letter}"><img src="${esc(logo)}" alt="" loading="lazy" onerror="this.parentNode.classList.remove('logo');this.parentNode.textContent=this.parentNode.dataset.l"></span>`
+    : `<span class="ico" style="${st}">${letter}</span>`;
+}
 function drawList(){
   const el = $('list');
   if (!S.assets.length){
@@ -420,14 +429,14 @@ function drawList(){
         let sub = '';
         if (a.cat === 'crypto'){
           const p = num(a.price) ?? S.prices[a.coinId]?.[S.base.toLowerCase()];
-          sub = qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase()) + (p != null ? ' × ' + money(p, S.base, p < 1 ? 6 : 2) : ' · prix inconnu');
+          sub = qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase()) + (p != null ? ' × ' + money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0) : ' · prix inconnu');
         } else {
           const cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100;
           sub = (cur !== S.base || (a.cat !== 'compte' && sh !== 100)) ? money(num(a.value) || 0, cur) + (a.cat !== 'compte' && sh !== 100 ? ' · ' + qty(sh) + ' %' : '') : '';
           if (!rate(cur)) sub += ' · taux ' + esc(cur) + ' manquant';
         }
         if (a.note) sub += (sub ? ' · ' : '') + esc(a.note);
-        return `<button class="row" data-id="${a.id}"><span class="ico" style="background:color-mix(in srgb,${CATS[a.cat].hex} 16%,transparent);color:${CATS[a.cat].hex}">${a.cat === 'crypto' && a.symbol ? esc(a.symbol.slice(0, 1).toUpperCase()) : CATS[a.cat].ini}</span><div class="nm"><div>${esc(a.name)}</div>${sub ? `<small>${sub}</small>` : ''}</div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
+        return `<button class="row" data-id="${a.id}">${icon(a)}<div class="nm"><div>${esc(a.name)}</div>${sub ? `<small>${sub}</small>` : ''}</div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
       }).join('') + '</div>';
   }).join('');
 }
@@ -490,8 +499,9 @@ async function refresh(quiet){
   const ids = [...new Set(S.assets.filter(a => a.cat === 'crypto' && a.coinId).map(a => a.coinId))];
   if (ids.length){
     try {
-      const data = await getJSON('https://api.coingecko.com/api/v3/simple/price?ids=' + encodeURIComponent(ids.join(',')) + '&vs_currencies=' + BASES.join(',').toLowerCase());
-      for (const id in data) S.prices[id] = data[id];
+      const bc = S.base.toLowerCase();
+      const data = await getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=' + bc + '&per_page=250&ids=' + encodeURIComponent(ids.join(',')));
+      for (const c of data){ S.prices[c.id] = Object.assign(S.prices[c.id] || {}, {[bc]: c.current_price}); if (c.image) S.logos[c.id] = c.image; }
     } catch(e){ okP = false; }
   }
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()).concat(BASES))].filter(c => c !== S.base);
@@ -525,7 +535,7 @@ function setCat(c){
 $('catSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setCat(b.dataset.c); });
 function showCoin(){
   $('coinChosen').classList.toggle('hidden', !coin);
-  if (coin) $('coinChosen').innerHTML = `<b>${esc(coin.name)}</b> · ${esc(coin.symbol.toUpperCase())} <small style="color:var(--mute)">(${esc(coin.id)})</small>`;
+  if (coin) $('coinChosen').innerHTML = `${coin.logo || S.logos[coin.id] ? `<img src="${esc(coin.logo || S.logos[coin.id])}" alt=""> ` : ''}<b>${esc(coin.name)}</b> · ${esc(coin.symbol.toUpperCase())} <small style="color:var(--mute)">(${esc(coin.id)})</small>`;
 }
 $('fCoinQ').addEventListener('input', e => {
   clearTimeout(searchT);
@@ -535,7 +545,7 @@ $('fCoinQ').addEventListener('input', e => {
     try {
       const d = await getJSON('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(q));
       const list = (d.coins || []).slice(0, 6);
-      box.innerHTML = list.length ? list.map(c => `<button type="button" data-id="${esc(c.id)}" data-n="${esc(c.name)}" data-s="${esc(c.symbol)}"><span>${esc(c.name)}</span><small>${esc(c.symbol)}</small></button>`).join('')
+      box.innerHTML = list.length ? list.map(c => `<button type="button" data-id="${esc(c.id)}" data-n="${esc(c.name)}" data-s="${esc(c.symbol)}" data-l="${esc(c.large || c.thumb || '')}"><span style="display:flex;align-items:center;gap:10px">${c.thumb ? `<img src="${esc(c.thumb)}" alt="">` : ''}${esc(c.name)}</span><small>${esc(c.symbol)}</small></button>`).join('')
         : '<div class="hint" style="padding:12px">Aucun résultat. Tu peux saisir le prix à la main.</div>';
     } catch(err){ box.innerHTML = '<div class="hint" style="padding:12px">Recherche impossible hors ligne. Saisis le prix à la main.</div>'; }
     box.classList.remove('hidden');
@@ -543,7 +553,7 @@ $('fCoinQ').addEventListener('input', e => {
 });
 $('coinResults').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s};
+  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s, logo:b.dataset.l};
   if (!$('fName').value) $('fName').value = coin.name;
   $('coinResults').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
 });
@@ -566,7 +576,7 @@ $('assetForm').addEventListener('submit', async e => {
     if (!coin && num($('fPrice').value) == null){ toast('Choisis une crypto ou saisis un prix'); return; }
     if (num($('fQty').value) == null){ toast('Indique la quantité'); return; }
     a.qty = $('fQty').value.trim(); a.price = $('fPrice').value.trim();
-    a.coinId = coin?.id || ''; a.coinName = coin?.name || ''; a.symbol = coin?.symbol || '';
+    a.coinId = coin?.id || ''; a.coinName = coin?.name || ''; a.symbol = coin?.symbol || ''; if (coin?.logo && a.coinId) S.logos[a.coinId] = coin.logo;
     delete a.value; delete a.cur; delete a.share;
   } else {
     if (num($('fValue').value) == null){ toast('Indique un montant'); return; }
