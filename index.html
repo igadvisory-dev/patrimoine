@@ -7,33 +7,33 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Patrimoine">
-<meta name="theme-color" content="#0a0b0d">
+<meta name="theme-color" content="#07131f">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="apple-touch-icon.png">
 <title>Patrimoine</title>
 <style>
-/* Direction : banque privée. Noir profond, or champagne, chiffres en serif. */
+/* Charte IG Advisory : blanc, bleu marine profond, accents argentés, titres en Bodoni. */
 :root{
   color-scheme:light dark;
-  --bg:light-dark(#f4f2ee,#0a0b0d);
-  --panel:light-dark(#ffffff,#131519);
-  --panel2:light-dark(#f8f6f2,#1a1d22);
-  --ink:light-dark(#141414,#f2efe9);
-  --mute:light-dark(#77736c,#8d8a84);
-  --line:light-dark(rgba(20,20,20,.08),rgba(255,255,255,.07));
-  --gold:light-dark(#9a7b45,#d2b47c);
-  --goldsoft:light-dark(rgba(154,123,69,.12),rgba(210,180,124,.12));
+  --bg:light-dark(#f5f7fa,#07131f);
+  --panel:light-dark(#ffffff,#0c1c2d);
+  --panel2:light-dark(#f5f7fa,#12263b);
+  --ink:light-dark(#07131f,#ffffff);
+  --mute:light-dark(#5e6d7e,#9aa7b6);
+  --line:light-dark(#e4e9f0,rgba(195,204,215,.12));
+  --gold:light-dark(#0f2a44,#c3ccd7);
+  --goldsoft:light-dark(rgba(15,42,68,.07),rgba(195,204,215,.10));
   --acc:var(--gold);
   --up:light-dark(#2f7d5b,#6fcf9f);
   --down:light-dark(#b24a3c,#ef8a7a);
-  --crypto:#d6a548;--societe:#7d93e8;--immo:#c47c5e;--compte:#5fb3a1;
-  --serif:ui-serif,"New York","Iowan Old Style",Georgia,serif;
+  --crypto:#6f9fd8;--societe:#a9b4c2;--immo:#b98b73;--compte:#6aa99b;
+  --serif:"Bodoni Moda","Bodoni 72",Didot,"Bodoni MT",ui-serif,Georgia,serif;
   --sans:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
 }
 :root[data-theme=light]{color-scheme:light}:root[data-theme=dark]{color-scheme:dark}
 *{box-sizing:border-box;min-width:0;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;background:var(--bg);color:var(--ink)}
-body{font:16px/1.45 var(--sans);overflow-x:clip;-webkit-font-smoothing:antialiased;
+body{font:300 16px/1.45 var(--sans);overflow-x:clip;-webkit-font-smoothing:antialiased;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)}
 button{font:inherit;color:inherit;border:0;background:none;cursor:pointer}
 input,select{font:inherit;font-size:16px;color:var(--ink);background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:13px 14px;width:100%;min-height:48px;-webkit-appearance:none;appearance:none}
@@ -44,23 +44,25 @@ label{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px;letter-sp
 .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* Verrouillage */
-#lock{position:fixed;inset:0;background:#0a0b0d;color:#f2efe9;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:50;padding:24px}
-#lock .mark{width:56px;height:56px;border-radius:16px;border:1px solid rgba(210,180,124,.4);display:grid;place-items:center;color:#d2b47c;font:500 26px var(--serif)}
+#lock{position:fixed;inset:0;background:#07131f;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:50;padding:24px}
+#lock .mark{width:64px;height:64px}
 #lock h1{font:400 28px var(--serif);margin:0;letter-spacing:.01em}
-#lockMsg{color:#8d8a84;min-height:22px;text-align:center;font-size:14px;max-width:300px}
+#lockMsg{color:#9aa7b6;min-height:22px;text-align:center;font-size:14px;max-width:300px}
 .dots{display:flex;gap:18px}
-.dots i{width:12px;height:12px;border-radius:50%;border:1px solid #6b6760;transition:background .15s}
-.dots i.on{background:#d2b47c;border-color:#d2b47c}
+.dots i{width:12px;height:12px;border-radius:50%;border:1px solid #4a5d72;transition:background .15s}
+.dots i.on{background:#fff;border-color:#fff}
 .dots.err{animation:shake .35s}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pad{display:grid;grid-template-columns:repeat(3,78px);gap:18px;margin-top:8px}
 .pad button{height:78px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.06);font:300 30px var(--sans)}
-.pad button:active{background:rgba(210,180,124,.22)}
-.pad .ghost{background:none;border:0;font-size:20px;color:#8d8a84}
+.pad button:active{background:rgba(195,204,215,.22)}
+.pad .ghost{background:none;border:0;font-size:20px;color:#9aa7b6}
 
 /* Structure */
 header.top{display:flex;align-items:center;justify-content:space-between;padding:12px 20px 0;max-width:720px;margin:0 auto}
-header.top h1{font-size:13px;margin:0;font-weight:500;color:var(--mute);letter-spacing:.04em}
+header.top h1{display:flex;align-items:center;gap:10px;font-size:13px;margin:0;font-weight:400;color:var(--mute);letter-spacing:.04em}
+header.top h1 svg{width:26px;height:26px}
+.lm-bg{fill:light-dark(#0f2a44,#fff)}.lm-fg{fill:light-dark(#fff,#0f2a44)}.lm-ring{stroke:light-dark(rgba(255,255,255,.35),rgba(15,42,68,.35))}
 .iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}
 .iconbtn svg{width:21px;height:21px}
 main{max-width:720px;margin:0 auto;padding:0 16px 120px}
@@ -104,12 +106,12 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .row+.row{border-top:1px solid var(--line)}
 .ico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;flex:none;font:500 15px var(--serif)}
 .row .nm{flex:1;overflow:hidden}
-.row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:500}
+.row .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:400}
 .row small{display:block;color:var(--mute);font-size:12.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:1px}
 .row .val{text-align:right;font-weight:600;font-size:15px}
 .empty{color:var(--mute);text-align:center;padding:30px 10px;line-height:1.6}
 .empty b{color:var(--gold)}
-.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;background:var(--gold);color:light-dark(#fff,#0a0b0d);display:grid;place-items:center;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:5}
+.fab{position:fixed;right:max(20px,env(safe-area-inset-right));bottom:calc(22px + env(safe-area-inset-bottom));width:58px;height:58px;border-radius:50%;background:var(--gold);color:light-dark(#fff,#07131f);display:grid;place-items:center;box-shadow:0 10px 30px rgba(0,0,0,.3);z-index:5}
 .fab svg{width:26px;height:26px}
 
 /* Feuilles modales */
@@ -122,7 +124,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .seg button{padding:12px;border-radius:14px;border:1px solid var(--line);background:var(--panel2);font-size:15px;display:flex;align-items:center;gap:10px;min-height:48px}
 .seg button.on{border-color:var(--gold);background:var(--goldsoft);font-weight:600}
 .two{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:10px}
-.btn{display:block;width:100%;padding:15px;border-radius:16px;background:var(--gold);color:light-dark(#fff,#0a0b0d);font-weight:600;margin-top:20px;min-height:52px;letter-spacing:.01em}
+.btn{display:block;width:100%;padding:15px;border-radius:16px;background:var(--gold);color:light-dark(#fff,#07131f);font-weight:600;margin-top:20px;min-height:52px;letter-spacing:.01em}
 .btn.sec{background:var(--panel2);color:var(--ink);border:1px solid var(--line)}
 .btn.danger{background:none;color:var(--down)}
 .hint{font-size:12.5px;color:var(--mute);margin-top:6px;line-height:1.5}
@@ -145,7 +147,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 <body>
 
 <div id="lock">
-  <div class="mark">P</div>
+  <div class="mark"><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" fill="#ffffff"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" stroke="#0f2a44" stroke-opacity=".35"/><g fill="#0f2a44"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g fill="#ffffff"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg></div>
   <h1 id="lockTitle">Patrimoine</h1>
   <div id="lockMsg"></div>
   <div class="dots" id="dots"><i></i><i></i><i></i><i></i><i></i><i></i></div>
@@ -159,7 +161,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 
 <div id="app" class="hidden">
   <header class="top">
-    <h1>Patrimoine net</h1>
+    <h1><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" class="lm-bg"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" class="lm-ring"/><g class="lm-fg"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g class="lm-bg"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg>Patrimoine net</h1>
     <div style="display:flex">
       <button class="iconbtn" id="btnLock" aria-label="Verrouiller"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
       <button class="iconbtn" id="btnSettings" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
@@ -264,10 +266,10 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 <script>
 {
 const CATS = {
-  crypto:{label:'Cryptos', one:'Crypto', color:'var(--crypto)', hex:'#d6a548', ini:'₿'},
-  societe:{label:'Sociétés', one:'Société', color:'var(--societe)', hex:'#7d93e8', ini:'S'},
-  immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#c47c5e', ini:'I'},
-  compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#5fb3a1', ini:'€'}
+  crypto:{label:'Cryptos', one:'Crypto', color:'var(--crypto)', hex:'#6f9fd8', ini:'₿'},
+  societe:{label:'Sociétés', one:'Société', color:'var(--societe)', hex:'#a9b4c2', ini:'S'},
+  immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#b98b73', ini:'I'},
+  compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#6aa99b', ini:'€'}
 };
 const BASES = ['EUR','USD','GBP','CHF','CAD'];
 const VAULT = 'patrimoine.vault.v1';
@@ -464,7 +466,7 @@ function drawChart(){
   const line = pts.map((p, i) => (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + Y(ys[i]).toFixed(1)).join('');
   const up = ys[ys.length - 1] >= ys[0], col = 'var(--gold)';
   const lbl = d => new Date(d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
-  s.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c9a96e" stop-opacity=".30"/><stop offset="1" stop-color="#c9a96e" stop-opacity="0"/></linearGradient></defs>` +
+  s.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gold)" stop-opacity=".22"/><stop offset="1" style="stop-color:var(--gold)" stop-opacity="0"/></linearGradient></defs>` +
     [.25, .5, .75].map(f => `<line x1="0" x2="${W}" y1="${T + f * (H - T - B)}" y2="${T + f * (H - T - B)}" stroke="var(--line)" stroke-dasharray="2 4"/>`).join('') +
     `<path d="${line}L${X(x1)} ${H - B}L${X(x0)} ${H - B}Z" fill="url(#g)"/>` +
     `<path d="${line}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` +
@@ -647,7 +649,7 @@ const THEME = 'patrimoine.theme';
 function applyTheme(t){
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]').content = dark ? '#0a0b0d' : '#f4f2ee';
+  document.querySelector('meta[name=theme-color]').content = dark ? '#07131f' : '#f5f7fa';
   [...$('sTheme').children].forEach(b => b.classList.toggle('on', b.dataset.t === t));
 }
 let theme = 'auto';
