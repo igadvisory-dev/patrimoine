@@ -171,6 +171,22 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .ico.logo.inl{border-radius:12px;background:#fff!important}
 .chiplogo{width:18px;height:18px;border-radius:4px;vertical-align:-4px;margin-right:6px}
 @media(prefers-reduced-motion:reduce){.drill2,.drill2-in,.instrow .chev{transition:none}.instb.anim2 .drill2-in>.row{animation:none}}
+.card.ov{padding:4px 18px}
+.ovb+.ovb{border-top:1px solid var(--line)}
+.ovrow{display:flex;align-items:center;gap:12px;width:100%;min-height:56px;text-align:left}
+.ovrow:active{opacity:.7}
+.ovt{font-size:15px;font-weight:400;flex:none}
+.spark{flex:1;height:24px;min-width:40px}
+.ovd{font-size:14px;font-weight:600;flex:none}
+.ovd.up{color:var(--up)}.ovd.down{color:var(--down)}
+.stack{flex:1;display:flex;height:8px;border-radius:4px;overflow:hidden;gap:2px;background:var(--panel2)}
+.stack i{display:block;height:100%}
+.ovrow .chev{color:var(--mute);display:grid;place-items:center;flex:none;transition:transform .4s cubic-bezier(.2,.8,.2,1)}
+.ovb.open .ovrow .chev{transform:rotate(90deg);color:var(--ink)}
+.ovb.open>.drill{grid-template-rows:1fr}
+.ovin{overflow:hidden;min-height:0;opacity:0;transition:opacity .3s}
+.ovb.open .ovin{opacity:1;transition:opacity .35s .08s}
+.ovin>:last-child{margin-bottom:16px}
 .drill-add{display:block;width:100%;text-align:left;color:var(--gold);font-size:14px;font-weight:500;padding:12px 0 16px;min-height:44px}
 .cat.anim .drill-in>.row,.cat.anim .drill-in>.drill-add,.cat.anim .inst>*{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms + 60ms)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
@@ -240,19 +256,24 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
       <div class="status"><span id="priceStatus"></span><button id="btnRefresh">Actualiser les prix</button></div>
     </section>
 
-    <section class="card">
-      <h2>Évolution</h2>
-      <div class="fig"><svg id="chart" aria-label="Évolution du patrimoine"></svg></div>
-      <div class="ranges" id="ranges">
-        <button data-r="30">1 M</button><button data-r="182">6 M</button><button data-r="365" class="on">1 A</button><button data-r="0">Tout</button>
+    <section class="card ov">
+      <div class="ovb" id="evoBox">
+        <button class="ovrow" data-ov="evo" aria-expanded="false"><span class="ovt">Évolution</span><svg class="spark" id="spark" viewBox="0 0 80 24" preserveAspectRatio="none" aria-hidden="true"></svg><span class="ovd num" id="evoDelta"></span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>
+        <div class="drill"><div class="ovin">
+          <div class="fig"><svg id="chart" aria-label="Évolution du patrimoine"></svg></div>
+          <div class="ranges" id="ranges">
+            <button data-r="30">1 M</button><button data-r="182">6 M</button><button data-r="365" class="on">1 A</button><button data-r="0">Tout</button>
+          </div>
+        </div></div>
       </div>
-    </section>
-
-    <section class="card" id="repCard">
-      <h2>Répartition</h2>
-      <div class="rep">
-        <div class="donut"><svg id="donut" viewBox="0 0 148 148" width="148" height="148" aria-label="Répartition par catégorie"></svg><div class="c" id="donutC"></div></div>
-        <div class="legend" id="legend"></div>
+      <div class="ovb" id="repCard">
+        <button class="ovrow" data-ov="rep" aria-expanded="false"><span class="ovt">Répartition</span><span class="stack" id="stack"></span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>
+        <div class="drill"><div class="ovin">
+          <div class="rep">
+            <div class="donut"><svg id="donut" viewBox="0 0 148 148" width="148" height="148" aria-label="Répartition par catégorie"></svg><div class="c" id="donutC"></div></div>
+            <div class="legend" id="legend"></div>
+          </div>
+        </div></div>
       </div>
     </section>
 
@@ -320,7 +341,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 2.6 du 23/11/2026.</div>
+  <div class="hint">Version 2.7 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -425,7 +446,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function unlocked(){
-  $('lock').classList.add('hidden'); $('app').classList.remove('hidden');
+  $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); applyUi();
   render();
   if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 10 * 60000) refresh(true);
 }
@@ -634,6 +655,7 @@ function toggleCat(c){
 function drawDonut(t){
   const svg = $('donut'), entries = Object.entries(t.by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   $('repCard').classList.toggle('hidden', !entries.length);
+  $('stack').innerHTML = entries.map(([c, v]) => `<i style="width:${(v / t.total * 100).toFixed(2)}%;background:${CATS[c].hex}"></i>`).join('');
   if (!entries.length) return;
   const R = 62, SW = 12, C = 2 * Math.PI * R, gap = entries.length > 1 ? 6 : 0; let off = 0;
   svg.innerHTML = `<circle cx="74" cy="74" r="${R}" fill="none" stroke="var(--panel2)" stroke-width="${SW}"/>` + entries.map(([c, v]) => {
@@ -648,7 +670,21 @@ function drawDonut(t){
     `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="pc num">${P(v / t.total)}</span><span class="am num">${money(v)}</span><span class="bar"><i style="width:${(v / t.total * 100).toFixed(1)}%;background:${CATS[c].hex}"></i></span></div>`).join('');
 }
 
+function drawSpark(){
+  if (!S) return;
+  let pts = S.history.filter(h => h.base === S.base);
+  if (range){ const from = new Date(Date.now() - range * 864e5).toLocaleDateString('sv-SE'); pts = pts.filter(h => h.d >= from); }
+  const sp = $('spark'), dd = $('evoDelta');
+  if (pts.length < 2){ sp.innerHTML = ''; dd.className = 'ovd num'; dd.textContent = '—'; return; }
+  const ys = pts.map(p => p.total), y0 = Math.min(...ys), y1 = Math.max(...ys), n = ys.length - 1;
+  const d = ys.map((y, i) => (i ? 'L' : 'M') + (i / n * 80).toFixed(1) + ' ' + (22 - (y - y0) / ((y1 - y0) || 1) * 20).toFixed(1)).join('');
+  sp.innerHTML = `<path d="${d}" fill="none" stroke="var(--gold)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
+  const ch = ys[0] ? (ys[n] - ys[0]) / ys[0] : 0;
+  dd.className = 'ovd num ' + (ch >= 0 ? 'up' : 'down');
+  dd.textContent = pct(ch) + ' · ' + ({30:'1 M', 182:'6 M', 365:'1 A', 0:'tout'})[range];
+}
 function drawChart(){
+  drawSpark();
   const s = $('chart'); if (!S) return;
   const W = s.clientWidth, H = s.clientHeight; if (!W) return;
   let pts = S.history.filter(h => h.base === S.base);
@@ -675,6 +711,15 @@ function drawChart(){
     `<text x="${W - Rt}" y="${H - 5}" fill="var(--mute)" font-size="12" text-anchor="end">${lbl(pts[pts.length - 1].d)}</text>`;
 }
 const chartObs = new ResizeObserver(drawChart); chartObs.observe($('chart'));
+document.querySelectorAll('.ovrow').forEach(b => b.addEventListener('click', () => {
+  const box = b.closest('.ovb'), open = !box.classList.contains('open');
+  box.classList.toggle('open', open); b.setAttribute('aria-expanded', open);
+  if (S){ S.ui = Object.assign({}, S.ui, {[b.dataset.ov]: open}); save().catch(() => {}); }
+  if (open && b.dataset.ov === 'evo') requestAnimationFrame(drawChart);
+}));
+function applyUi(){
+  for (const k of ['evo', 'rep']){ const open = !!(S && S.ui && S.ui[k]); const box = document.querySelector(`.ovrow[data-ov="${k}"]`).closest('.ovb'); box.classList.toggle('open', open); box.querySelector('.ovrow').setAttribute('aria-expanded', open); }
+}
 $('ranges').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
   range = +b.dataset.r; [...$('ranges').children].forEach(x => x.classList.toggle('on', x === b)); drawChart();
