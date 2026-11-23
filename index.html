@@ -191,6 +191,16 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .ovin{overflow:hidden;min-height:0;opacity:0;transition:opacity .3s}
 .ovb.open .ovin{opacity:1;transition:opacity .35s .08s}
 .ovin>:last-child{margin-bottom:16px}
+html,body{overscroll-behavior-y:none}
+#ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 6px);width:40px;height:40px;border-radius:50%;background:var(--panel);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.18);display:grid;place-items:center;color:var(--mute);z-index:15;opacity:0;transform:translate(-50%,-46px);pointer-events:none}
+#ptr svg{width:20px;height:20px;grid-area:1/1}
+#ptr .ok{opacity:0;transform:scale(.4);transition:opacity .2s,transform .3s cubic-bezier(.2,1.6,.4,1)}
+#ptr.ready{color:var(--gold)}
+#ptr.spin{color:var(--gold)}
+#ptr.spin svg:first-child{animation:spinp .8s linear infinite}
+#ptr.done svg:first-child{opacity:0}
+#ptr.done .ok{opacity:1;transform:scale(1);color:var(--up)}
+@keyframes spinp{to{transform:rotate(360deg)}}
 .drill-add{display:block;width:100%;text-align:left;color:var(--gold);font-size:14px;font-weight:500;padding:12px 0 16px;min-height:44px}
 .cat.anim .drill-in>.row,.cat.anim .drill-in>.drill-add,.cat.anim .inst>*{animation:fadeUp .45s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms + 60ms)}
 @keyframes fadeUp{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
@@ -245,6 +255,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   </div>
 </div>
 
+<div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
 <div id="app" class="hidden">
   <header class="top">
     <h1><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" class="lm-bg"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" class="lm-ring"/><g class="lm-fg"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g class="lm-bg"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg>Patrimoine net</h1>
@@ -344,7 +355,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 3.0 du 23/11/2026.</div>
+  <div class="hint">Version 3.1 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -451,7 +462,7 @@ document.addEventListener('visibilitychange', () => {
 function unlocked(){
   $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); applyUi();
   render();
-  if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 10 * 60000) refresh(true);
+  if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 60000) refresh(true, true);
 }
 
 /* ---------- Calculs ---------- */
@@ -745,7 +756,14 @@ $('ranges').addEventListener('click', e => {
 
 /* ---------- Prix et taux ---------- */
 async function getJSON(url){ const r = await fetch(url, {cache:'no-store'}); if (!r.ok) throw new Error(r.status); return r.json(); }
-async function refresh(quiet){
+let refreshing = null;
+function refresh(quiet, auto){
+  if (refreshing) return refreshing;
+  refreshing = doRefresh(quiet, auto).finally(() => { refreshing = null; });
+  return refreshing;
+}
+async function doRefresh(quiet, auto){
+  if (!S) return;
   if (!navigator.onLine){ if (!quiet) toast('Hors ligne : derniers prix connus conservés'); return; }
   $('btnRefresh').textContent = 'Actualisation…';
   let okP = true, okF = true;
@@ -754,24 +772,72 @@ async function refresh(quiet){
     try {
       const bc = S.base.toLowerCase();
       const data = await getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=' + bc + '&per_page=250&ids=' + encodeURIComponent(ids.join(',')));
+      if (!S) return;
       for (const c of data){ S.prices[c.id] = Object.assign(S.prices[c.id] || {}, {[bc]: c.current_price}); if (c.image) S.logos[c.id] = c.image; }
     } catch(e){ okP = false; }
   }
+  if (!S) return;
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()).concat(BASES))].filter(c => c !== S.base);
-  if (curs.length){
+  // Les taux de change (BCE) ne changent qu'une fois par jour : en automatique, une fois par heure suffit.
+  if (curs.length && !(auto && Date.now() - (S.fx.t || 0) < 3600000)){
     const urls = ['https://api.frankfurter.dev/v1/latest?base=' + S.base, 'https://api.frankfurter.app/latest?from=' + S.base];
     okF = false;
     for (const u of urls){
-      try { const d = await getJSON(u); if (d.rates){ Object.assign(S.fx.rates, d.rates); S.fx.t = Date.now(); okF = true; break; } } catch(e){}
+      try { const d = await getJSON(u); if (d.rates && S){ Object.assign(S.fx.rates, d.rates); S.fx.t = Date.now(); okF = true; break; } } catch(e){}
     }
   }
-  if (okP || okF) S.pricesAt = Date.now();
   $('btnRefresh').textContent = 'Actualiser les prix';
   if (!S) return;
+  if (okP || okF) S.pricesAt = Date.now();
   await commit();
+  if (auto) return;
   if (!okP || !okF) toast(!okP && !okF ? 'Impossible de joindre les services de prix' : !okP ? 'Prix crypto indisponibles pour le moment' : 'Taux de change indisponibles pour le moment');
   else if (!quiet) toast('Prix à jour');
 }
+// Actualisation automatique toutes les minutes, app ouverte et déverrouillée.
+setInterval(() => { if (S && !document.hidden && navigator.onLine) refresh(true, true); }, 60000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden && S && Date.now() - (S.pricesAt || 0) > 60000) refresh(true, true); });
+
+/* ---------- Tirer pour actualiser ---------- */
+{
+  const ptr = $('ptr'), app = $('app'), TH = 72;
+  let y0 = null, dy = 0, busy = false;
+  const sheetOpen = () => [...document.querySelectorAll('.sheet')].some(x => !x.classList.contains('hidden'));
+  const setPull = (d, anim) => {
+    app.style.transition = anim ? 'transform .35s cubic-bezier(.2,.8,.2,1)' : 'none';
+    ptr.style.transition = anim ? 'transform .35s cubic-bezier(.2,.8,.2,1), opacity .25s' : 'none';
+    app.style.transform = d ? `translateY(${d}px)` : '';
+    ptr.style.transform = `translate(-50%, ${Math.min(d, TH + 10) - 46}px)`;
+    ptr.style.opacity = d > 4 ? Math.min(1, d / TH) : 0;
+    ptr.querySelector('svg').style.transform = busy ? '' : `rotate(${Math.min(d / TH, 1) * 270}deg)`;
+    ptr.classList.toggle('ready', d >= TH && !busy);
+  };
+  document.addEventListener('touchstart', e => {
+    if (busy || !S || sheetOpen() || window.scrollY > 0 || e.touches.length > 1) { y0 = null; return; }
+    y0 = e.touches[0].clientY; dy = 0;
+  }, {passive:true});
+  document.addEventListener('touchmove', e => {
+    if (y0 == null) return;
+    const raw = e.touches[0].clientY - y0;
+    if (raw <= 0 || window.scrollY > 0){ if (dy) setPull(0, false); dy = 0; return; }
+    dy = Math.min(140, raw * 0.5);
+    if (e.cancelable) e.preventDefault();
+    setPull(dy, false);
+  }, {passive:false});
+  document.addEventListener('touchend', async () => {
+    if (y0 == null) return; y0 = null;
+    if (dy >= TH){
+      busy = true; ptr.classList.add('spin'); setPull(56, true);
+      if (!navigator.onLine) toast('Hors ligne : derniers prix connus conservés');
+      else await Promise.all([refresh(true), new Promise(r => setTimeout(r, 700))]);
+      ptr.classList.remove('spin'); ptr.classList.add('done');
+      await new Promise(r => setTimeout(r, 450));
+      busy = false; ptr.classList.remove('done'); setPull(0, true);
+    } else setPull(0, true);
+    dy = 0;
+  });
+}
+
 $('btnRefresh').addEventListener('click', () => refresh(false));
 
 /* ---------- Feuille actif ---------- */
