@@ -97,14 +97,16 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .donut .c{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
 .donut .c b{font:400 19px var(--serif)}
 .donut .c small{font-size:11px;color:var(--mute);margin-top:2px}
-.legend{flex:1;display:grid;gap:12px}
-.lg{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:4px 10px;font-size:14px}
+.legend{flex:1;display:grid;gap:0}
+.lg{display:grid;grid-template-columns:auto 1fr auto 52px;align-items:center;gap:10px;font-size:15px;padding:10px 0;border-top:1px solid var(--line)}
+.lg:first-child{border-top:0}
 .lg .pc{font-weight:600}
-.lg .am{grid-column:2/4;font-size:12px;color:var(--mute)}
+.lg .am{color:var(--mute);font-size:14px}
+.lg .pc{text-align:right}
 .lg .bar{grid-column:1/4;height:3px;border-radius:2px;background:var(--panel2);overflow:hidden}
 .lg .bar i{display:block;height:100%;border-radius:2px}
 .sw{width:8px;height:8px;border-radius:50%;flex:none}
-@media(max-width:390px){.rep{flex-direction:column;align-items:stretch}.donut{margin:0 auto 4px}}
+
 
 /* Liste */
 .group h3{display:flex;align-items:center;gap:8px;font-size:13px;margin:0;padding:2px 0 6px;color:var(--mute);font-weight:500;letter-spacing:.03em}
@@ -272,7 +274,6 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
         <button class="ovrow" data-ov="rep" aria-expanded="false"><span class="ovt">Répartition</span><span class="stack" id="stack"></span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>
         <div class="drill"><div class="ovin">
           <div class="rep">
-            <div class="donut"><svg id="donut" viewBox="0 0 148 148" width="148" height="148" aria-label="Répartition par catégorie"></svg><div class="c" id="donutC"></div></div>
             <div class="legend" id="legend"></div>
           </div>
         </div></div>
@@ -343,7 +344,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 2.9 du 23/11/2026.</div>
+  <div class="hint">Version 3.0 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -678,21 +679,13 @@ function toggleCat(c){
 }
 
 function drawDonut(t){
-  const svg = $('donut'), entries = Object.entries(t.by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
+  const entries = Object.entries(t.by).filter(([, v]) => v > 0).sort((a, b) => b[1] - a[1]);
   $('repCard').classList.toggle('hidden', !entries.length);
   $('stack').innerHTML = entries.map(([c, v]) => `<i style="width:${(v / t.total * 100).toFixed(2)}%;background:${CATS[c].hex}"></i>`).join('');
   if (!entries.length) return;
-  const R = 62, SW = 12, C = 2 * Math.PI * R, gap = entries.length > 1 ? 6 : 0; let off = 0;
-  svg.innerHTML = `<circle cx="74" cy="74" r="${R}" fill="none" stroke="var(--panel2)" stroke-width="${SW}"/>` + entries.map(([c, v]) => {
-    const len = v / t.total * C, d = Math.max(len - gap, 0.01);
-    const el = `<circle cx="74" cy="74" r="${R}" fill="none" stroke="${CATS[c].hex}" stroke-width="${SW}" stroke-linecap="${len > gap + SW ? 'round' : 'butt'}" stroke-dasharray="${Math.max(d - (len > gap + SW ? SW : 0), 0.01)} ${C}" stroke-dashoffset="${-(off + gap / 2 + (len > gap + SW ? SW / 2 : 0))}" transform="rotate(-90 74 74)"/>`;
-    off += len; return el;
-  }).join('');
-  const short = new Intl.NumberFormat('fr-FR', {notation:'compact', maximumFractionDigits:1}).format(t.total);
-  $('donutC').innerHTML = `<b class="num">${esc(short)}</b><small>${entries.length} catégorie${entries.length > 1 ? 's' : ''}</small>`;
   const P = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits: v < .1 ? 1 : 0}).format(v);
   $('legend').innerHTML = entries.map(([c, v]) =>
-    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="pc num">${P(v / t.total)}</span><span class="am num">${money(v)}</span><span class="bar"><i style="width:${(v / t.total * 100).toFixed(1)}%;background:${CATS[c].hex}"></i></span></div>`).join('');
+    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${P(v / t.total)}</span></div>`).join('');
 }
 
 function drawSpark(){
