@@ -267,7 +267,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 4.7 · 24/11/2026</div>
+  <div class="ver">Version 4.8 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1004,6 +1004,30 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S 
 
 $('btnRefresh').addEventListener('click', () => refresh(false));
 
+/* ---------- Saisie des montants avec séparateur de milliers ---------- */
+const AMOUNT_IDS = ['fValue', 'fDebt', 'fQty', 'fPrice'];
+const NBSP = '\u202f';
+function fmtAmount(str){
+  const raw = String(str ?? '').replace(/[^\d.,]/g, '');
+  if (!raw) return '';
+  const k = raw.search(/[.,]/);
+  const int = (k < 0 ? raw : raw.slice(0, k)).replace(/\D/g, '');
+  const dec = k < 0 ? null : raw.slice(k + 1).replace(/\D/g, '');
+  const intF = int.replace(/\B(?=(\d{3})+(?!\d))/g, NBSP);
+  return dec == null ? intF : (intF || '0') + ',' + dec;
+}
+const numStr = v => { const n = num(v); return n == null ? '' : String(n); };
+AMOUNT_IDS.forEach(id => $(id).addEventListener('input', e => {
+  const el = e.target, pos = el.selectionStart ?? el.value.length;
+  const kept = el.value.slice(0, pos).replace(/[^\d.,]/g, '').length;
+  const f = fmtAmount(el.value);
+  if (f === el.value) return;
+  el.value = f;
+  let n = 0, i = 0;
+  while (i < f.length && n < kept){ if (f[i] !== NBSP) n++; i++; }
+  try { el.setSelectionRange(i, i); } catch(err){}
+}));
+
 /* ---------- Feuille actif ---------- */
 let editing = null, cat = 'compte', coin = null, searchT = 0;
 $('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}"><span class="sw" style="background:${m.color}"></span>${m.one}</button>`).join('');
@@ -1071,6 +1095,7 @@ function openAsset(a){
   { const cv = (a?.cur || S.base).toUpperCase(); if (![...$('fCur').options].some(o => o.value === cv)) $('fCur').insertAdjacentHTML('beforeend', `<option value="${esc(cv)}">${esc(cv)}</option>`); $('fCur').value = cv; } $('fShare').value = a?.share ?? ''; $('fDebt').value = a?.debt ?? ''; $('fNote').value = a?.note || '';
   $('fCoinQ').value = ''; $('coinResults').classList.add('hidden'); showCoin();
   $('btnDelete').classList.toggle('hidden', !a);
+  AMOUNT_IDS.forEach(id => { $(id).value = fmtAmount($(id).value); });
   setCat(a?.cat || cat); show('assetSheet');
 }
 $('btnAdd').addEventListener('click', () => openAsset(null));
@@ -1092,15 +1117,15 @@ $('assetForm').addEventListener('submit', async e => {
   if (cat === 'crypto'){
     if (!coin && num($('fPrice').value) == null){ toast('Choisis une crypto ou saisis un prix'); return; }
     if (num($('fQty').value) == null){ toast('Indique la quantité'); return; }
-    a.qty = $('fQty').value.trim(); a.price = $('fPrice').value.trim();
+    a.qty = numStr($('fQty').value); a.price = numStr($('fPrice').value);
     a.coinId = coin?.id || ''; a.coinName = coin?.name || ''; a.symbol = coin?.symbol || ''; if (coin?.logo && a.coinId) S.logos[a.coinId] = coin.logo;
     delete a.value; delete a.cur; delete a.share;
   } else {
     if (num($('fValue').value) == null){ toast('Indique un montant'); return; }
     const cur = ($('fCur').value.trim() || S.base).toUpperCase();
     if (!/^[A-Z]{3}$/.test(cur)){ toast('Devise sur 3 lettres (EUR, USD…)'); return; }
-    a.value = $('fValue').value.trim(); a.cur = cur; a.share = cat === 'compte' ? '' : $('fShare').value.trim();
-    if (cat === 'immo' && num($('fDebt').value)) a.debt = $('fDebt').value.trim(); else delete a.debt;
+    a.value = numStr($('fValue').value); a.cur = cur; a.share = cat === 'compte' ? '' : numStr($('fShare').value);
+    if (cat === 'immo' && num($('fDebt').value)) a.debt = numStr($('fDebt').value); else delete a.debt;
     delete a.qty; delete a.price; delete a.coinId; delete a.symbol; delete a.coinName;
   }
   if (!editing) S.assets.push(a);
