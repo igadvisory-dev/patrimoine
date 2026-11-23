@@ -171,6 +171,9 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .kv b{color:var(--ink);font-weight:500;text-align:right;white-space:normal}
 .kv.tot{color:var(--ink);font-weight:500}.kv.tot b{font-weight:700}
 .instb.anim2 .drill2-in>.kv,.instb.anim2 .drill2-in>.drill-add{animation:fadeUp .4s cubic-bezier(.2,.8,.2,1) both}
+.addr{display:inline-flex;align-items:flex-start;gap:6px;color:var(--gold);font-weight:500;text-align:right;text-decoration:underline;text-decoration-color:color-mix(in srgb,var(--gold) 35%,transparent);text-underline-offset:3px;padding:0;max-width:70%}
+.addr svg{width:16px;height:16px;flex:none;margin-top:2px}
+a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -264,7 +267,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 4.4 · 24/11/2026</div>
+  <div class="ver">Version 4.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -349,7 +352,7 @@ html,body{overscroll-behavior-y:none}
       </div>
     </div>
 
-    <label for="fNote">Note (facultatif)</label>
+    <label for="fNote" id="lblNote">Note (facultatif)</label>
     <input id="fNote" placeholder="Adresse, n° de parts, remarque…">
 
     <button class="btn" type="submit">Enregistrer</button>
@@ -375,6 +378,14 @@ html,body{overscroll-behavior-y:none}
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
+</div></div>
+
+<!-- Choix de l'application de cartes -->
+<div class="sheet hidden" id="mapSheet"><div>
+  <p id="mapAddr" style="font-size:17px;margin:6px 0 4px"></p>
+  <a class="btn maplink" id="mapApple" target="_blank" rel="noopener">Ouvrir dans Plans</a>
+  <a class="btn sec maplink" id="mapGoogle" target="_blank" rel="noopener" style="margin-top:8px">Ouvrir dans Google Maps</a>
+  <button class="btn sec" type="button" data-close style="margin-top:8px;background:none;border:0">Annuler</button>
 </div></div>
 
 <!-- Dialogue de confirmation -->
@@ -632,10 +643,10 @@ function immoRow(a){
   const id = 'immo|a:' + a.id, open = openInst.has(id);
   const sub = [debt ? 'Crédit ' + money(debt, cur) : 'Sans crédit', sh !== 100 ? qty(sh) + ' %' : '', a.note ? esc(a.note) : ''].filter(Boolean).join(' · ');
   const kv = (k, x, cls = '') => `<div class="kv ${cls}"><span>${k}</span><b class="num">${x}</b></div>`;
-  const lines = kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '− ' + money(debt, cur) : '0') +
+  const lines = kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '− ' + money(debt, cur) : 'Aucun') +
     (sh !== 100 ? kv('Valeur nette du bien', money(val - debt, cur)) + kv('Part détenue', qty(sh) + ' %') : '') +
     (a.inst ? kv('Mode de détention', esc(a.inst)) : '') +
-    (a.note ? kv('Note', esc(a.note)) : '') +
+    (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/></svg>${esc(a.note)}</button></div>` : '') +
     (cur !== S.base ? kv('Ta part en ' + cur, money((val - debt) * sh / 100, cur)) : '') +
     kv(sh !== 100 ? 'Ta part nette' : 'Valeur nette', v == null ? '—' : money(v), 'tot') +
     `<button class="drill-add" type="button" data-edit="${a.id}">Modifier ce bien</button>`;
@@ -1020,6 +1031,9 @@ function setCat(c){
   $('valueFields').classList.toggle('hidden', c === 'crypto');
   $('shareWrap').classList.toggle('hidden', c === 'compte');
   $('debtWrap').classList.toggle('hidden', c !== 'immo');
+  $('lblNote').textContent = c === 'immo' ? 'Adresse du bien' : 'Note (facultatif)';
+  $('fNote').placeholder = c === 'immo' ? '12 rue de la Paix, 75002 Paris' : 'N° de parts, remarque…';
+  $('fNote').autocomplete = c === 'immo' ? 'street-address' : 'off';
   const inst = INST[c]; $('lblInst').textContent = inst[0]; $('fInst').placeholder = inst[1];
   renderInst();
   $('lblValue').textContent = {societe:'Valeur de la société', immo:'Valeur estimée du bien', compte:'Solde'}[c] || 'Valeur';
@@ -1063,6 +1077,7 @@ $('btnAdd').addEventListener('click', () => openAsset(null));
 $('list').addEventListener('click', e => {
   const c = e.target.closest('.catrow'); if (c) return toggleCat(c.dataset.cat);
   const ir = e.target.closest('.instrow'); if (ir) return toggleInst(ir.closest('.instb'));
+  const ad = e.target.closest('.addr'); if (ad) return openMaps(ad.dataset.addr);
   const ed = e.target.closest('[data-edit]'); if (ed) return openAsset(S.assets.find(a => a.id === ed.dataset.edit));
   const add = e.target.closest('.drill-add'); if (add){ cat = add.dataset.add; return openAsset(null); }
   const v = e.target.closest('.vseg button');
@@ -1156,6 +1171,14 @@ function ask(msg){
     $('dlgOk').onclick = () => done(true); $('dlgNo').onclick = () => done(false);
   });
 }
+function openMaps(addr){
+  const q = encodeURIComponent(addr);
+  $('mapAddr').textContent = addr;
+  $('mapApple').href = 'https://maps.apple.com/?q=' + q;
+  $('mapGoogle').href = 'https://www.google.com/maps/search/?api=1&query=' + q;
+  show('mapSheet');
+}
+$('mapSheet').addEventListener('click', e => { if (e.target.closest('.maplink')) setTimeout(() => $('mapSheet').classList.add('hidden'), 300); });
 let toastT = 0;
 function toast(m){ const t = $('toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2800); }
 
