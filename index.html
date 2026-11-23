@@ -182,7 +182,13 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .links{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line)}
 .lnk{color:var(--gold);font-size:14px;font-weight:500;padding:12px 0;min-height:44px}
 #infoBody .kv:first-child{border-top:0}
-.sheet>div{transition:transform .3s cubic-bezier(.2,.8,.2,1)}
+.sheet{transition:background-color .32s ease,-webkit-backdrop-filter .32s ease,backdrop-filter .32s ease}
+.sheet>div{transition:transform .38s cubic-bezier(.2,.9,.25,1)}
+.sheet.enter,.sheet.leave{background-color:rgba(0,0,0,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}
+.sheet.enter>div,.sheet.leave>div{transform:translateY(105%)!important}
+.sheet.leave>div{transition:transform .3s cubic-bezier(.4,0,.8,.4)}
+.sheet.leave{pointer-events:none}
+@media(prefers-reduced-motion:reduce){.sheet,.sheet>div{transition:none}}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -276,7 +282,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.2 · 24/11/2026</div>
+  <div class="ver">Version 5.3 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -578,7 +584,7 @@ $('pad').addEventListener('click', e => {
   drawDots();
   if (entry.length === 6) setTimeout(pinDone, 120);
 });
-function lock(){ key = null; S = null; curPin = ''; closeAll(); setLock('unlock'); $('btnBio').classList.toggle('off', !bioOK || !bioCfg()); }
+function lock(){ key = null; S = null; curPin = ''; closeAll(true); setLock('unlock'); $('btnBio').classList.toggle('off', !bioOK || !bioCfg()); }
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) hiddenAt = Date.now();
@@ -1145,14 +1151,14 @@ $('assetForm').addEventListener('submit', async e => {
     delete a.qty; delete a.price; delete a.coinId; delete a.symbol; delete a.coinName;
   }
   if (!editing) S.assets.push(a);
-  $('assetSheet').classList.add('hidden'); await commit();
+  hideSheet('assetSheet'); await commit();
   const needP = a.cat === 'crypto' && a.coinId && !S.prices[a.coinId];
   const needF = a.cat !== 'crypto' && !rate(a.cur);
   if (needP || needF) refresh(true);
 });
 $('btnDelete').addEventListener('click', async () => {
   if (!editing || !await ask('Supprimer « ' + editing.name + ' » ?')) return;
-  S.assets = S.assets.filter(a => a.id !== editing.id); $('assetSheet').classList.add('hidden'); await commit();
+  S.assets = S.assets.filter(a => a.id !== editing.id); hideSheet('assetSheet'); await commit();
 });
 
 /* ---------- Réglages ---------- */
@@ -1200,10 +1206,21 @@ $('btnLock').addEventListener('click', lock);
 $('btnBioSet').addEventListener('click', async () => { if (bioCfg()){ if (await ask('Désactiver le déverrouillage par Face ID ?')) disableBio(); } else enableBio(); });
 
 /* ---------- Utilitaires d'interface ---------- */
-function show(id){ $(id).classList.remove('hidden'); }
-function closeAll(){ document.querySelectorAll('.sheet').forEach(s => s.classList.add('hidden')); }
+function show(id){
+  const el = $(id); clearTimeout(el._t);
+  el.classList.remove('hidden', 'leave'); el.classList.add('enter');
+  void el.offsetWidth; el.classList.remove('enter');
+}
+function hideSheet(el, fast){
+  if (typeof el === 'string') el = $(el);
+  if (el.classList.contains('hidden')) return;
+  if (fast){ el.classList.add('hidden'); el.classList.remove('leave'); return; }
+  el.classList.add('leave'); clearTimeout(el._t);
+  el._t = setTimeout(() => { el.classList.add('hidden'); el.classList.remove('leave'); el.firstElementChild.style.transform = ''; }, 320);
+}
+function closeAll(fast){ document.querySelectorAll('.sheet').forEach(s => hideSheet(s, fast)); }
 document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e => {
-  if ((e.target === s || e.target.closest('[data-close]')) && s.id !== 'dlg') s.classList.add('hidden');
+  if ((e.target === s || e.target.closest('[data-close]')) && s.id !== 'dlg') hideSheet(s);
 }));
 document.querySelectorAll('.sheet').forEach(sh => {
   if (sh.id === 'dlg') return;
@@ -1215,14 +1232,14 @@ document.querySelectorAll('.sheet').forEach(sh => {
   }, {passive:false});
   panel.addEventListener('touchend', () => {
     if (y0 == null) return; y0 = null; panel.style.transition = '';
-    if (dy > 90){ panel.style.transform = 'translateY(100%)'; setTimeout(() => { sh.classList.add('hidden'); panel.style.transform = ''; }, 250); }
+    if (dy > 90){ panel.style.transform = ''; hideSheet(sh); }
     else panel.style.transform = '';
   });
 });
 function ask(msg){
   return new Promise(res => {
     $('dlgMsg').textContent = msg; show('dlg');
-    const done = v => { $('dlg').classList.add('hidden'); $('dlgOk').onclick = $('dlgNo').onclick = null; res(v); };
+    const done = v => { hideSheet('dlg'); $('dlgOk').onclick = $('dlgNo').onclick = null; res(v); };
     $('dlgOk').onclick = () => done(true); $('dlgNo').onclick = () => done(false);
   });
 }
@@ -1242,7 +1259,7 @@ function openMaps(addr){
   $('mapGoogle').href = 'https://www.google.com/maps/search/?api=1&query=' + q;
   show('mapSheet');
 }
-$('mapSheet').addEventListener('click', e => { if (e.target.closest('.maplink')) setTimeout(() => $('mapSheet').classList.add('hidden'), 300); });
+$('mapSheet').addEventListener('click', e => { if (e.target.closest('.maplink')) setTimeout(() => hideSheet('mapSheet'), 300); });
 let toastT = 0;
 function toast(m){ const t = $('toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2800); }
 
