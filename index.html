@@ -166,6 +166,8 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .instb.lvl3 .drill2-in .row.sub:first-child{border-top:1px solid var(--line)}
 .instb.anim2 .drill2-in>.instb{animation:fadeUp .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms + 40ms)}
 .instb.anim2 .drill2-in>.minih{animation:fadeUp .4s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 35ms + 40ms)}
+.ico.badge{background:none!important;border-radius:50%}
+.ico.badge svg{width:38px;height:38px;display:block}
 .ico.cur{font:500 15px var(--sans)}
 .ico.inl img{width:26px;height:26px;border-radius:7px}
 .ico.logo.inl{border-radius:12px;background:#fff!important}
@@ -341,7 +343,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Version 2.7 du 23/11/2026.</div>
+  <div class="hint">Version 2.8 du 23/11/2026.</div>
   <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (BCE via Frankfurter) sont récupérés sur internet.</div>
 </div></div>
 
@@ -528,6 +530,10 @@ function assetRow(a){
 }
 const sumOf = items => items.reduce((s, a) => s + (value(a) || 0), 0);
 const plural = (n, w) => n + ' ' + w + (n > 1 ? 's' : '');
+const CAT_BADGE = {
+  crypto:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#F7931A"/><text x="32" y="45" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="38" font-weight="700" fill="#fff" transform="rotate(14 32 32)">₿</text></svg>',
+  compte:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#003399"/><g fill="#FFCC00">' + Array.from({length:12}, (_, i) => { const a = i * Math.PI / 6; return `<circle cx="${(32 + 25 * Math.sin(a)).toFixed(2)}" cy="${(32 - 25 * Math.cos(a)).toFixed(2)}" r="2.2"/>`; }).join('') + '</g><text x="32" y="43" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="30" font-weight="600" fill="#fff">€</text></svg>'
+};
 const openCats = new Set();
 const viewMode = () => S.view || (S.cryptoView === 'wallet' ? 'inst' : 'asset');
 function coinRows(items){
@@ -598,7 +604,7 @@ function curContent(items){
       return `<div class="instb lvl3${bopen ? ' open' : ''}" data-k="${esc(bid)}" style="--i:${bi}"><button class="row instrow sub" aria-expanded="${bopen}">${instIcon(bk, 'compte')}<div class="nm"><div>${bk ? esc(bk) : 'Sans banque indiquée'}</div><small>${plural(bl.length, 'compte')}${k !== S.base ? ' · ' + money(bl.reduce((s, a) => s + (num(a.value) || 0), 0), k) : ''}</small></div><div class="val num">${bl.some(a => value(a) == null) ? '—' : money(sumOf(bl))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${accts}</div></div></div>`;
     }).join('');
     const sym = CUR_SYM[k] || k.slice(0, 1);
-    return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}" style="--i:${gi}"><button class="row instrow" aria-expanded="${open}"><span class="ico cur" style="background:color-mix(in srgb,${CATS.compte.hex} 16%,transparent);color:${CATS.compte.hex}">${esc(sym)}</span><div class="nm"><div>${esc(k)}</div><small>${sub}</small></div><div class="val num">${list.some(a => value(a) == null) ? '—' : money(sumOf(list))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${rows}</div></div></div>`;
+    return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}" style="--i:${gi}"><button class="row instrow" aria-expanded="${open}">${k === 'EUR' ? `<span class="ico badge">${CAT_BADGE.compte}</span>` : `<span class="ico cur" style="background:color-mix(in srgb,${CATS.compte.hex} 16%,transparent);color:${CATS.compte.hex}">${esc(sym)}</span>`}<div class="nm"><div>${esc(k)}</div><small>${sub}</small></div><div class="val num">${list.some(a => value(a) == null) ? '—' : money(sumOf(list))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${rows}</div></div></div>`;
   }).join('');
 }
 function walletContent(c, items){
@@ -634,7 +640,8 @@ function drawList(){
     const insts = new Set(items.map(a => a.inst).filter(Boolean)).size;
     const sub = plural(items.length, 'actif') + (insts && (c === 'crypto' || c === 'compte') ? ' · ' + plural(insts, word[c]) : '');
     const open = openCats.has(c);
-    return `<div class="cat${open ? ' open' : ''}" data-c="${c}"><button class="row catrow" data-cat="${c}" aria-expanded="${open}"><span class="ico" style="background:color-mix(in srgb,${meta.hex} 16%,transparent);color:${meta.hex}">${meta.ini}</span><div class="nm"><div>${meta.label}</div><small>${sub}</small></div><div class="val num">${money(sumOf(items))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>` +
+    const ic = CAT_BADGE[c] ? `<span class="ico badge">${CAT_BADGE[c]}</span>` : `<span class="ico" style="background:color-mix(in srgb,${meta.hex} 16%,transparent);color:${meta.hex}">${meta.ini}</span>`;
+    return `<div class="cat${open ? ' open' : ''}" data-c="${c}"><button class="row catrow" data-cat="${c}" aria-expanded="${open}">${ic}<div class="nm"><div>${meta.label}</div><small>${sub}</small></div><div class="val num">${money(sumOf(items))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>` +
       `<div class="drill"><div class="drill-in" style="--c:${meta.hex}">${catContent(c)}</div></div></div>`;
   }).join('') + '</div>';
 }
