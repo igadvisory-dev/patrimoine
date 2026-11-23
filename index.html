@@ -267,7 +267,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 4.9 · 24/11/2026</div>
+  <div class="ver">Version 5.0 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -650,7 +650,7 @@ function immoRow(a){
     (a.inst ? kv('Mode de détention', esc(a.inst)) : '') +
     (a.note ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : '') +
     `<button class="drill-add" type="button" data-edit="${a.id}">Modifier ce bien</button>`;
-  return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}"><button class="row instrow sub" aria-expanded="${open}">${icon(a)}<div class="nm"><div>${esc(a.name)}</div></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${lines}</div></div></div>`;
+  return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}"><button class="row instrow sub" aria-expanded="${open}"><span class="ico badge">${HOUSE_BADGE}</span><div class="nm"><div>${esc(a.name)}</div></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${lines}</div></div></div>`;
 }
 function societeRow(a){
   const v = value(a), cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100, val = num(a.value) || 0;
@@ -684,7 +684,9 @@ function assetRow(a){
 }
 const sumOf = items => items.reduce((s, a) => s + (value(a) || 0), 0);
 const plural = (n, w) => n + ' ' + w + (n > 1 ? 's' : '');
+const HOUSE_BADGE = '<svg viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="hg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#D9A27F"/><stop offset="1" stop-color="#8A543C"/></linearGradient></defs><circle cx="32" cy="32" r="32" fill="url(#hg)"/><path d="M32 15.5 48 29.2c.7.6.3 1.8-.7 1.8H45v14.5c0 1-.8 1.8-1.8 1.8H36.5V37.5h-9v9.8h-6.7c-1 0-1.8-.8-1.8-1.8V31h-2.3c-1 0-1.4-1.2-.7-1.8Z" fill="#fff"/><rect x="38.5" y="17.5" width="4" height="7" rx="1" fill="#fff"/><circle cx="32" cy="29" r="2.4" fill="#A86B4F"/></svg>';
 const CAT_BADGE = {
+  immo: HOUSE_BADGE,
   crypto:'<svg viewBox="0 0 64 64" aria-hidden="true"><circle cx="32" cy="32" r="32" fill="#F7931A"/><text x="32" y="45" text-anchor="middle" font-family="-apple-system,Helvetica,Arial,sans-serif" font-size="38" font-weight="700" fill="#fff" transform="rotate(14 32 32)">₿</text></svg>'
 };
 const FONT = '-apple-system,Helvetica,Arial,sans-serif';
@@ -826,7 +828,7 @@ function drawList(){
     const insts = new Set(items.map(a => a.inst).filter(Boolean)).size;
     const nCoins = new Set(items.map(a => a.coinId || a.name)).size, nCurs = new Set(items.map(a => (a.cur || S.base).toUpperCase())).size;
     const sub = c === 'crypto' ? plural(nCoins, 'crypto') + (insts ? ' · ' + plural(insts, 'wallet') : '')
-      : c === 'compte' ? plural(items.length, 'compte') + ' · ' + plural(nCurs, 'devise')
+      : c === 'compte' ? plural(nCurs, 'devise') + ' · ' + plural(items.length, 'compte')
       : c === 'immo' ? plural(items.length, 'bien') : plural(items.length, 'société');
     const open = openCats.has(c);
     const ic = catBadge(c) ? `<span class="ico badge">${catBadge(c)}</span>` : `<span class="ico" style="background:color-mix(in srgb,${meta.hex} 16%,transparent);color:${meta.hex}">${meta.ini}</span>`;
