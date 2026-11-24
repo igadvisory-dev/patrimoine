@@ -328,6 +328,9 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
  #app{position:relative;z-index:0}
 .topband{display:none;position:absolute;left:0;right:0;top:calc(-1 * env(safe-area-inset-top));height:calc(env(safe-area-inset-top) + 260px);background:light-dark(#0f2a44,#07131f);z-index:-1;border-radius:0 0 28px 28px}
 .bkbtns{display:flex;gap:6px;flex:none}
+.lseg{flex:none;width:96px;display:grid;grid-template-columns:1fr 1fr;gap:2px;padding:3px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);min-height:40px;box-sizing:border-box}
+.lseg button{border-radius:9px;font-size:13px;font-weight:600;color:var(--mute);transition:background-color .25s,color .25s}
+.lseg button.on{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .sbtn{flex:none;width:96px;min-height:40px;padding:0 8px;border-radius:12px;background:var(--panel2);border:1px solid var(--line);color:var(--ink);font-size:14px;font-weight:600;text-align:center}
 .sbtn:active{opacity:.7}
 .sbtn.danger{color:var(--down);border-color:color-mix(in srgb,var(--down) 35%,transparent);background:none}
@@ -472,7 +475,7 @@ html,body{height:100%;overflow:hidden}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 10.7 · 24 Nov 2026</div>
+  <div class="ver">Version 10.8 · 24 Nov 2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -593,6 +596,7 @@ html,body{height:100%;overflow:hidden}
 <!-- Réglages -->
 <div class="sheet hidden" id="setSheet"><div>
   <header><h2>Réglages</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
+  <div class="setrow"><span>Langue</span><div class="lseg" id="langSeg"><button type="button" data-l="fr">FR</button><button type="button" data-l="en">EN</button></div></div>
   <div class="setrow"><span style="white-space:nowrap">Devise de référence</span><select id="sBase" class="sctl"></select></div>
   <div class="hidden"><div id="fxInfo"></div><div id="fxList"></div></div>
   <div class="setrow"><span>Sauvegarde</span><div class="bkbtns"><button class="sbtn" type="button" id="btnExport">Exporter</button><button class="sbtn" type="button" id="btnImport">Importer</button></div></div>
@@ -647,6 +651,172 @@ html,body{height:100%;overflow:hidden}
 
 
 <script>
+/* ---------- Langue : français (source) / anglais ----------
+   Le texte de l'app est écrit en français. En anglais, une couche de traduction
+   remplace à la volée les textes affichés (nœuds texte et attributs) grâce au
+   dictionnaire ci-dessous, et les formats de nombres/dates suivent la langue. */
+let LANG = 'fr';
+try { LANG = localStorage.getItem('patrimony.lang') || ((navigator.language || 'fr').toLowerCase().startsWith('fr') ? 'fr' : 'en'); } catch(e){}
+let LOC = LANG === 'en' ? 'en-GB' : 'fr-FR';
+const EN = {
+  // Navigation, en-tête
+  'Patrimoine':'Wealth', 'Finance':'Finance', 'Navigation':'Navigation', 'Patrimoine net':'Net worth',
+  'Changer de mode':'Change theme', 'Passer en mode jour':'Switch to light mode', 'Passer en mode nuit':'Switch to dark mode',
+  'Masquer les montants':'Hide amounts', 'Afficher les montants':'Show amounts', 'Verrouiller':'Lock', 'Réglages':'Settings', 'Fermer':'Close',
+  'Actualiser les montants':'Update amounts', 'Ajouter un actif':'Add an asset', 'Actualiser les prix':'Refresh prices', 'Actualisation…':'Refreshing…',
+  'montant masqué':'hidden amount',
+  // Écran du code
+  'Choisis un code':'Choose a passcode', 'Confirme le code':'Confirm the passcode',
+  '6 chiffres. Il chiffre tes données : sans lui, elles sont perdues.':'6 digits. It encrypts your data: without it, your data is lost.',
+  'Les codes ne correspondent pas. Recommence.':'The passcodes don’t match. Try again.', 'Chiffrement…':'Encrypting…', 'Déverrouillage…':'Unlocking…',
+  'Code incorrect':'Wrong passcode', 'Face ID à réactiver : utilise ton code':'Face ID needs to be turned on again: use your passcode',
+  'Déverrouiller avec Face ID':'Unlock with Face ID', 'Nouveau code à 6 chiffres':'New 6-digit passcode',
+  'Cette app doit être ouverte via une adresse https.':'This app must be opened from an https address.',
+  // Vue d'ensemble
+  'Évolution':'Performance', 'Répartition':'Allocation', 'Évolution du patrimoine':'Net worth over time', 'YTD':'YTD',
+  '1 M':'1M', '6 M':'6M', '1 A':'1Y', 'Tout':'All', 'tout':'all',
+  'L\'historique se construit jour après jour.':'History builds up day by day.',
+  // Catégories et liste
+  'Mes actifs':'My assets', 'Crypto':'Crypto', 'Sociétés':'Companies', 'Société':'Company', 'Immobilier':'Real estate', 'Immo':'Property', 'Cash':'Cash', 'Compte':'Account',
+  'Sans wallet indiqué':'No wallet specified', 'Sans banque indiquée':'No bank specified', 'Sans mode de détention':'No holding structure',
+  'Aucun actif pour l\'instant.':'No assets yet.', 'Touche ':'Tap ', ' pour ajouter un compte, une crypto, un bien ou une société.':' to add an account, a crypto, a property or a company.',
+  'Mes cryptos':'My cryptos', 'prix inconnu':'price unknown', 'Détail par wallet':'Breakdown by wallet',
+  // Fiche détail
+  'Quantité':'Quantity', 'Cours':'Price', 'Valeur':'Value', 'Inconnu':'Unknown', 'Inconnue':'Unknown', 'Aucun':'None',
+  'Valeur du bien':'Property value', 'Crédit restant dû':'Outstanding loan', 'Valeur nette du bien':'Net property value', 'Part détenue':'Ownership share',
+  'Ta part':'Your share', 'Ta part nette':'Your net share', 'Valeur nette':'Net value', 'Valeur de la société':'Company value', 'Solde':'Balance',
+  'Wallet':'Wallet', 'Banque':'Bank', 'Mode de détention':'Holding structure', 'Adresse':'Address', 'Note':'Note',
+  'Ajouté le':'Added on', 'Dernière modification':'Last modified', 'Modifier':'Edit',
+  'Historique des quantités':'Quantity history', 'Historique du solde':'Balance history', 'Historique de la valeur nette':'Net value history',
+  'Ouvrir dans Plans':'Open in Apple Maps', 'Ouvrir dans Google Maps':'Open in Google Maps', 'Annuler':'Cancel', 'Confirmer':'Confirm',
+  // Formulaire d'actif
+  'Nouvel actif':'New asset', 'Actif':'Type', 'Nom':'Name', 'Ex. Livret A':'E.g. Savings account', 'Détention':'Holding',
+  'Wallet / plateforme':'Wallet / platform', 'En direct, SCI…':'Direct, property company…', 'En direct, holding…':'Direct, holding company…',
+  'Nouveau wallet…':'New wallet…', 'Nouvelle banque…':'New bank…', 'Autre…':'Other…', 'Choisir…':'Choose…', 'Choisir une crypto':'Choose a crypto',
+  'Rechercher (bitcoin, ETH…)':'Search (bitcoin, ETH…)', 'Rechercher (dollar, AED…)':'Search (dollar, AED…)', 'Recherche…':'Searching…',
+  'Tape le nom ou le symbole d’une crypto.':'Type the name or symbol of a crypto.',
+  'Aucun résultat. Tu peux saisir le prix à la main.':'No results. You can enter the price manually.',
+  'Recherche impossible hors ligne. Saisis le prix à la main.':'Search unavailable offline. Enter the price manually.',
+  'Prix unitaire':'Unit price', 'Auto':'Auto', 'Devise':'Currency', 'Part détenue (%)':'Ownership (%)', 'Crédit':'Loan',
+  'Valeur estimée du bien':'Estimated property value', 'Adresse du bien':'Property address', 'Note (facultatif)':'Note (optional)',
+  'Remarque…':'Comment…', '12 rue de la Paix, 75002 Paris':'221B Baker Street, London', 'Supprimer':'Delete', 'Enregistrer':'Save',
+  'Indique un nom':'Enter a name', 'Choisis une crypto ou saisis un prix':'Choose a crypto or enter a price', 'Indique la quantité':'Enter the quantity',
+  'Indique un montant':'Enter an amount', 'Devise sur 3 lettres (EUR, USD…)':'3-letter currency code (EUR, USD…)', 'Enregistrement impossible':'Couldn’t save',
+  // Actualisation rapide
+  'Actualisation':'Update', 'Modifie seulement ce qui a changé.':'Only change what’s different.', 'Aucune modification':'No changes',
+  'Aucun actif à actualiser.':'No assets to update.',
+  // Réglages
+  'Langue':'Language', 'Devise de référence':'Base currency', 'Sauvegarde':'Backup', 'Exporter':'Export', 'Importer':'Import',
+  'Face ID':'Face ID', 'Activer':'Turn on', 'Désactiver':'Turn off', 'Code d\'accès':'Passcode', 'Changer':'Change', 'Tout effacer':'Erase all', 'Effacer':'Erase',
+  'Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko, CryptoCompare ou Binance) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.':
+    'Your data stays on this phone, encrypted with your passcode. Only crypto prices (CoinGecko, CryptoCompare or Binance) and exchange rates (ExchangeRate-API, or the ECB via Frankfurter as a fallback) are fetched from the internet.',
+  'Face ID activé':'Face ID turned on', 'Face ID indisponible sur cet appareil':'Face ID isn’t available on this device',
+  'Verrouille puis déverrouille avec ton code, puis réessaie':'Lock, unlock with your passcode, then try again',
+  'Déverrouille avec ton code, puis active Face ID dans les réglages':'Unlock with your passcode, then turn on Face ID in Settings',
+  'Code modifié':'Passcode changed', 'Code modifié : réactive Face ID dans les réglages':'Passcode changed: turn Face ID back on in Settings',
+  'Désactiver le déverrouillage par Face ID ?':'Turn off Face ID unlock?',
+  'Effacer définitivement toutes les données de ce téléphone ? Pense à exporter une sauvegarde avant.':'Permanently erase all data from this phone? Remember to export a backup first.',
+  // Sauvegarde
+  'Sauvegarde chiffrée':'Encrypted backup', 'Sauvegarde protégée':'Protected backup', 'Mot de passe':'Password', 'Chiffrer':'Encrypt', 'Déverrouiller':'Unlock',
+  'Enregistrer le fichier':'Save the file', 'Afficher le mot de passe':'Show password', 'Masquer le mot de passe':'Hide password',
+  'Choisis un mot de passe (8 caractères minimum). Il sera demandé pour restaurer : sans lui, le fichier est illisible.':'Choose a password (at least 8 characters). You’ll need it to restore: without it, the file can’t be read.',
+  'Saisis le mot de passe de cette sauvegarde.':'Enter this backup’s password.', 'Longueur suffisante':'Long enough', '8 caractères minimum':'At least 8 characters',
+  'Les mots de passe correspondent':'Passwords match', 'Les mots de passe ne correspondent pas':'Passwords don’t match',
+  'Fichier chiffré prêt. Enregistre-le, par exemple dans iCloud Drive.':'Encrypted file ready. Save it, for example to iCloud Drive.',
+  'Partage impossible : réessaie':'Couldn’t share: try again', 'Fichier de sauvegarde invalide':'Invalid backup file', 'Mot de passe incorrect':'Wrong password', 'Sauvegarde restaurée':'Backup restored',
+  // Prix
+  'Hors ligne : derniers prix connus conservés':'Offline: keeping the last known prices', 'Prix à jour':'Prices updated',
+  'Impossible de joindre les services de prix':'Couldn’t reach the price services', 'Prix crypto indisponibles pour le moment':'Crypto prices unavailable right now',
+  'Taux de change indisponibles pour le moment':'Exchange rates unavailable right now',
+  // Finance
+  'Gestion des revenus':'Income management', 'Bientôt disponible':'Coming soon',
+  'Ici, tu pourras suivre tes revenus et tes dépenses, mois après mois.':'Here you’ll be able to track your income and spending, month by month.',
+  // Devises
+  'Euro':'Euro', 'Dollar américain':'US dollar', 'Livre sterling':'Pound sterling', 'Franc suisse':'Swiss franc', 'Dirham des Émirats':'UAE dirham',
+  'Dollar canadien':'Canadian dollar', 'Dollar australien':'Australian dollar', 'Dollar néo-zélandais':'New Zealand dollar', 'Yen japonais':'Japanese yen', 'Yuan chinois':'Chinese yuan',
+  'Dollar de Hong Kong':'Hong Kong dollar', 'Dollar de Singapour':'Singapore dollar', 'Won sud-coréen':'South Korean won', 'Roupie indienne':'Indian rupee', 'Baht thaïlandais':'Thai baht',
+  'Riyal saoudien':'Saudi riyal', 'Riyal qatarien':'Qatari riyal', 'Dinar koweïtien':'Kuwaiti dinar', 'Dinar bahreïni':'Bahraini dinar', 'Rial omanais':'Omani rial',
+  'Shekel israélien':'Israeli shekel', 'Livre turque':'Turkish lira', 'Couronne suédoise':'Swedish krona', 'Couronne norvégienne':'Norwegian krone', 'Couronne danoise':'Danish krone',
+  'Złoty polonais':'Polish złoty', 'Couronne tchèque':'Czech koruna', 'Forint hongrois':'Hungarian forint', 'Leu roumain':'Romanian leu', 'Dirham marocain':'Moroccan dirham',
+  'Dinar tunisien':'Tunisian dinar', 'Livre égyptienne':'Egyptian pound', 'Franc CFA (UEMOA)':'CFA franc (WAEMU)', 'Franc CFA (CEMAC)':'CFA franc (CEMAC)', 'Rand sud-africain':'South African rand',
+  'Real brésilien':'Brazilian real', 'Peso mexicain':'Mexican peso'
+};
+const PL = {compte:['account','accounts'], wallet:['wallet','wallets'], bien:['property','properties'], 'société':['company','companies'], actif:['asset','assets'], crypto:['crypto','cryptos'], devise:['currency','currencies'], banque:['bank','banks']};
+const EN_RX = [
+  [/^(\d+) (compte|wallet|bien|société|actif|crypto|devise|banque)s?$/, (m, n, w) => n + ' ' + PL[w][+n > 1 ? 1 : 0]],
+  [/^(.+) % détenus$/, (m, x) => x + '% owned'],
+  [/^Valeur (.+)$/, (m, x) => 'Value ' + x], [/^Crédit (.+)$/, (m, x) => 'Loan ' + x],
+  [/^Avant le (.+)$/, (m, d) => 'Before ' + d], [/^Depuis le (.+)$/, (m, d) => 'Since ' + d], [/^Le (\d.+)$/, (m, d) => d],
+  [/^Modifié le (.+)$/, (m, d) => 'Edited ' + d], [/^Ajouté avant le (.+)$/i, (m, d) => 'Added before ' + d], [/^Ajouté (\d.+)$/i, (m, d) => 'Added ' + d],
+  [/^Enregistrer (\d+) modifications?$/, (m, n) => `Save ${n} change${+n > 1 ? 's' : ''}`],
+  [/^(\d+) actifs? mis à jour$/, (m, n) => `${n} asset${+n > 1 ? 's' : ''} updated`],
+  [/^Supprimer « (.+) » \?$/, (m, x) => `Delete “${x}”?`],
+  [/^Remplacer tes données actuelles par cette sauvegarde \((\d+) actifs\) \?$/, (m, n) => `Replace your current data with this backup (${n} assets)?`],
+  [/^ajout$/, () => 'added'], [/^([\d.,]+) %$/, (m, x) => x + '%']
+];
+const EN_FRAG = [['Historique : ', 'History: '], [' depuis le ', ' since '], ['depuis le ', 'since ']];
+function trCore(t){
+  if (EN[t] != null) return EN[t];
+  for (const [rx, f] of EN_RX){ const m = t.match(rx); if (m) return f(...m); }
+  return null;
+}
+function tr(str){
+  if (LANG !== 'en' || !str || !/[A-Za-zÀ-ÿ%]/.test(str)) return str;
+  const lead = str.match(/^\s*/)[0], trail = str.match(/\s*$/)[0], core = str.trim();
+  let out = EN[core] != null ? EN[core] : null;
+  if (out == null && /\s(·|→)\s/.test(core)){
+    const parts = core.split(/(\s(?:·|→)\s)/); let ch = false;
+    const tp = parts.map(p => { if (/^\s(·|→)\s$/.test(p)) return p; const x = trCore(p.trim()); if (x != null){ ch = true; return x; } return p; });
+    if (ch) out = tp.join('');
+  }
+  if (out == null) out = trCore(core);
+  if (out == null){ let x = core; for (const [a, b] of EN_FRAG) x = x.split(a).join(b); if (x !== core) out = x; }
+  if (out == null && EN[str] != null) return EN[str];
+  return out == null ? str : lead + out + trail;
+}
+const TR_ATTRS = ['placeholder', 'aria-label', 'title'];
+function trText(n){
+  if (n.__en !== undefined && n.nodeValue === n.__en) return;
+  const p = n.parentNode; if (!p || p.nodeName === 'SCRIPT' || p.nodeName === 'STYLE') return;
+  const src = n.nodeValue, t = tr(src);
+  if (t !== src){ n.__fr = src; n.__en = t; n.nodeValue = t; } else { n.__fr = n.__en = undefined; }
+}
+function trAttr(el, at){
+  const v = el.getAttribute(at); if (v == null) return;
+  el.__fra = el.__fra || {}; const c = el.__fra[at];
+  if (c && v === c[1]) return;
+  const t = tr(v); if (t !== v){ el.__fra[at] = [v, t]; el.setAttribute(at, t); } else delete el.__fra[at];
+}
+function trTree(root){
+  if (root.nodeType === 3) return trText(root);
+  if (root.nodeType !== 1) return;
+  for (const at of TR_ATTRS) if (root.hasAttribute(at)) trAttr(root, at);
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  let n; while ((n = w.nextNode())){ if (n.nodeType === 3) trText(n); else for (const at of TR_ATTRS) if (n.hasAttribute(at)) trAttr(n, at); }
+}
+function untrTree(root){
+  const w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  let n; while ((n = w.nextNode())){
+    if (n.nodeType === 3){ if (n.__en !== undefined && n.nodeValue === n.__en) n.nodeValue = n.__fr; n.__fr = n.__en = undefined; }
+    else if (n.__fra){ for (const at in n.__fra){ if (n.getAttribute(at) === n.__fra[at][1]) n.setAttribute(at, n.__fra[at][0]); } n.__fra = null; }
+  }
+}
+const trObs = new MutationObserver(ms => {
+  if (LANG !== 'en') return;
+  for (const m of ms){
+    if (m.type === 'childList') m.addedNodes.forEach(trTree);
+    else if (m.type === 'characterData') trText(m.target);
+    else if (m.type === 'attributes') trAttr(m.target, m.attributeName);
+  }
+});
+trObs.observe(document.documentElement, {subtree:true, childList:true, characterData:true, attributes:true, attributeFilter:TR_ATTRS});
+function applyLang(){
+  document.documentElement.lang = LANG;
+  if (LANG === 'en') trTree(document.body); else untrTree(document.body);
+}
+applyLang();
+
+
 {
 const CATS = {
   crypto:{label:'Crypto', one:'Crypto', color:'var(--crypto)', hex:'#6f9fd8', ini:'₿'},
@@ -881,15 +1051,15 @@ async function commit(){ snapshot(); render(); try { await save(); } catch(e){ t
 /* ---------- Format ---------- */
 let hideAmounts = false;
 try { hideAmounts = localStorage.getItem('patrimony.hide') === '1'; } catch(e){}
-const moneyRaw = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
+const moneyRaw = (v, cur = S.base, d = 0) => new Intl.NumberFormat(LOC, {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
 function fitTotal(){ const el = $('total'); el.style.fontSize = ''; const max = parseFloat(getComputedStyle(el).fontSize); let f = max; while (el.scrollWidth > el.clientWidth + 1 && f > 26){ f -= 2; el.style.fontSize = f + 'px'; } }
 addEventListener('resize', () => { if (S) fitTotal(); });
 const HBAR = '<span class="hbar" role="img" aria-label="montant masqué"></span>';
 const money = (v, cur = S.base, d = 0) => hideAmounts ? moneyRaw(0, cur).replace(/[\d\s\u202f\u00a0.,]+/, m => (/^\s|\s$/.test(m) && m.trim() === '' ? m : HBAR + (/\s$/.test(m) ? '\u00a0' : '')) ) : moneyRaw(v, cur, d);
-const qty = v => new Intl.NumberFormat('fr-FR', {maximumFractionDigits:8}).format(v);
+const qty = v => new Intl.NumberFormat(LOC, {maximumFractionDigits:8}).format(v);
 const qtyH = v => hideAmounts ? HBAR : qty(v); // quantité détenue : masquée comme les montants
-const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
-const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
+const pct = v => new Intl.NumberFormat(LOC, {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
+const when = t => new Date(t).toLocaleString(LOC, {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
 /* ---------- Rendu ---------- */
 function sizeBand(){
@@ -1163,10 +1333,10 @@ function drawDonut(t){
   const sum = entries.reduce((s, [, v]) => s + v, 0), raw = entries.map(([, v]) => v / sum * 100), pcs = raw.map(Math.floor);
   raw.map((r, i) => [r - pcs[i], i]).sort((a, b) => b[0] - a[0]).slice(0, 100 - pcs.reduce((s, x) => s + x, 0)).forEach(([, i]) => pcs[i]++);
   $('legend').innerHTML = entries.map(([c, v], i) =>
-    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${pcs[i]}${NBSP}%</span></div>`).join('');
+    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${pcs[i]}${LANG === 'en' ? '' : NBSP}%</span></div>`).join('');
 }
 
-const shortDay = d => { const x = new Date(d); return x.toLocaleDateString('fr-FR', x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
+const shortDay = d => { const x = new Date(d); return x.toLocaleDateString(LOC, x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
 // ---------- Historique des cours (cryptos) et des taux de change ----------
 function lastAtOrBefore(arr, d){ // arr trié [[jour, valeur], …]
   let lo = 0, hi = arr.length - 1, r = -1;
@@ -1331,7 +1501,7 @@ let chartState = null;
     const g = $('scrub'); if (!g) return; g.style.display = '';
     $('scLine').setAttribute('x1', px); $('scLine').setAttribute('x2', px);
     $('scDot').setAttribute('cx', px); $('scDot').setAttribute('cy', py);
-    const d = new Date(st.pts[i].d + 'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'});
+    const d = new Date(st.pts[i].d + 'T12:00:00').toLocaleDateString(LOC, {day:'numeric', month:'short', year:'numeric'});
     tip.innerHTML = `<b class="num">${money(st.ys[i])}</b><span>${d}</span>`;
     tip.classList.remove('hidden'); if ($('scMax')) $('scMax').style.display = 'none';
     const w = tip.offsetWidth; tip.style.left = Math.max(0, Math.min(st.W - w, px - w / 2)) + 'px';
@@ -1618,12 +1788,12 @@ $('coinResults').addEventListener('click', e => {
 function openAsset(a){
   { const h = a && a.cat !== 'crypto' && a.valHist?.length > 1 ? a.valHist : null;
     $('valHist').classList.toggle('hidden', !h);
-    if (h) $('valHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, v, db]) => `${money((num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0), (a.cur || S.base).toUpperCase())} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → ') + (a.cat === 'immo' ? ' (valeur nette du bien)' : ''); }
+    if (h) $('valHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, v, db]) => `${money((num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0), (a.cur || S.base).toUpperCase())} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString(LOC)}`).join(' → ') + (a.cat === 'immo' ? ' (valeur nette du bien)' : ''); }
   { const h = a?.cat === 'crypto' && a.qtyHist?.length > 1 ? a.qtyHist : null;
     $('qtyHist').classList.toggle('hidden', !h);
-    if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qtyH(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → '); }
+    if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qtyH(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString(LOC)}`).join(' → '); }
   $('fAdded').value = a ? (a.added || '') : today(); $('fAdded').max = today();
-  $('assetMeta').textContent = a ? (a.updated ? 'Modifié le ' + updatedTxt(a) : 'Ajouté ' + addedTxt(a).toLowerCase()) : '';
+  $('assetMeta').textContent = a ? (a.updated ? 'Modifié le ' + updatedTxt(a) : 'Ajouté ' + (a.added ? fmtDay(a.added) : 'avant le ' + fmtDay(LEGACY))) : '';
   coinSearch = false; $('instList').classList.add('hidden'); $('coinList').classList.add('hidden');
   editing = a || null; coin = a?.coinId ? {id:a.coinId, name:a.coinName || a.name, symbol:a.symbol || ''} : null;
   $('assetTitle').textContent = a ? 'Modifier' : 'Nouvel actif';
@@ -1734,7 +1904,7 @@ function curPicker(sel, small){
   const opts = document.createElement('div');
   function fill(){
     const t = norm(q.value.trim());
-    const items = [...sel.options].filter(o => !t || norm(o.value).includes(t) || norm(CUR_NAME[o.value]).includes(t));
+    const items = [...sel.options].filter(o => !t || norm(o.value).includes(t) || norm(CUR_NAME[o.value]).includes(t) || norm(EN[CUR_NAME[o.value]]).includes(t));
     opts.innerHTML = items.map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${bd(o.value)}<span class="pv">${esc(o.value)}</span><span class="pn">${esc(CUR_NAME[o.value] || '')}</span></button>`).join('') || '<div class="hint" style="padding:10px 8px">Aucune devise trouvée</div>';
     if (!list.contains(opts)) list.append(opts);
   }
@@ -1745,6 +1915,14 @@ function curPicker(sel, small){
   draw();
 }
 curPicker($('sBase'), true); curPicker($('fCur'));
+function drawLang(){ document.querySelectorAll('#langSeg button').forEach(b => b.classList.toggle('on', b.dataset.l === LANG)); }
+drawLang();
+$('langSeg').addEventListener('click', e => {
+  const b = e.target.closest('button[data-l]'); if (!b || b.dataset.l === LANG) return;
+  LANG = b.dataset.l; LOC = LANG === 'en' ? 'en-GB' : 'fr-FR'; try { localStorage.setItem('patrimony.lang', LANG); } catch(e){}
+  drawLang(); applyLang();
+  if (S){ render(); drawFx(); }
+});
 $('btnSettings').addEventListener('click', () => { $('sBase').value = S.base; drawFx(); show('setSheet'); });
 $('fxList').addEventListener('change', async e => { const c = e.target.dataset.cur; if (!c) return; S.fx.manual[c] = e.target.value.trim(); await commit(); drawFx(); });
 $('sBase').addEventListener('change', async e => {
@@ -1895,9 +2073,9 @@ function ask(msg){
   });
 }
 const LEGACY = '2026-11-24';
-const fmtDay = d => new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
+const fmtDay = d => new Date(d + 'T12:00:00').toLocaleDateString(LOC, {day:'numeric', month:'long', year:'numeric'});
 const addedTxt = a => a.added ? fmtDay(a.added) : 'Avant le ' + fmtDay(LEGACY);
-const updatedTxt = a => a.updated ? new Date(a.updated).toLocaleString('fr-FR', {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}) : 'Inconnue';
+const updatedTxt = a => a.updated ? new Date(a.updated).toLocaleString(LOC, {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}) : 'Inconnue';
 function histHtml(a){
   const cur = (a.cur || S.base).toUpperCase(), sym = (a.symbol || '').toUpperCase();
   let rows;
