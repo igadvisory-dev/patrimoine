@@ -315,6 +315,11 @@ html.masked .sctip b{letter-spacing:.05em}
 .ui input{border:0;background:none;min-height:40px!important;padding:8px 6px 8px 10px!important;text-align:right;font-variant-numeric:tabular-nums}
 .ui input:focus{outline:none}
 .ui em{font-style:normal;font-size:13px;color:var(--mute);flex:none}
+/* Montants masqués aussi dans les champs : barre à la place du chiffre, valeur réelle visible seulement pendant la saisie. */
+html.masked .ui input.amt:not(:focus),html.masked #fQty:not(:focus),html.masked #fValue:not(:focus),html.masked #fDebt:not(:focus){color:transparent;caret-color:var(--ink);background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='8'%3E%3Crect width='48' height='8' rx='4' fill='%238a96a3' fill-opacity='.4'/%3E%3C/svg%3E");background-repeat:no-repeat;background-size:48px 8px}
+html.masked .ui input.amt:not(:focus){background-position:right 6px center}
+html.masked #fQty:not(:focus),html.masked #fValue:not(:focus),html.masked #fDebt:not(:focus){background-position:left 12px center}
+html.masked .ui input.amt:not(:focus)::placeholder,html.masked #fQty:not(:focus)::placeholder,html.masked #fValue:not(:focus)::placeholder,html.masked #fDebt:not(:focus)::placeholder{color:transparent}
 .uf.chg .ui{border-color:var(--gold);background:var(--goldsoft)}
 .ufoot{position:sticky;bottom:0;margin:0 -20px;padding:10px 20px calc(14px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
 .ufoot .btn{margin:0}
@@ -417,7 +422,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.5 · 24/11/2026</div>
+  <div class="ver">Version 9.6 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -811,6 +816,7 @@ const moneyRaw = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {sty
 const HBAR = '<span class="hbar" role="img" aria-label="montant masqué"></span>';
 const money = (v, cur = S.base, d = 0) => hideAmounts ? moneyRaw(0, cur).replace(/[\d\s\u202f\u00a0.,]+/, m => (/^\s|\s$/.test(m) && m.trim() === '' ? m : HBAR + (/\s$/.test(m) ? '\u00a0' : '')) ) : moneyRaw(v, cur, d);
 const qty = v => new Intl.NumberFormat('fr-FR', {maximumFractionDigits:8}).format(v);
+const qtyH = v => hideAmounts ? HBAR : qty(v); // quantité détenue : masquée comme les montants
 const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
 const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
@@ -878,7 +884,7 @@ function detailLines(a){
     kv(cur !== S.base ? 'Valeur' : 'Ta part', v == null ? '—' : money(v), 'tot');
   if (a.cat === 'crypto'){
     const p = num(a.price) ?? S.prices[a.coinId]?.[S.base.toLowerCase()];
-    return kv('Quantité', qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase())) + kv('Cours', p == null ? 'Inconnu' : money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0)) + kv('Valeur', v == null ? '—' : money(v), 'tot');
+    return kv('Quantité', qtyH(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase())) + kv('Cours', p == null ? 'Inconnu' : money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0)) + kv('Valeur', v == null ? '—' : money(v), 'tot');
   }
   return kv('Solde', money(val, cur)) + (cur !== S.base ? kv('Valeur', v == null ? '—' : money(v), 'tot') : '');
 }
@@ -889,7 +895,7 @@ function assetRow(a){
   let sub = '';
   if (a.cat === 'crypto'){
     const p = num(a.price) ?? S.prices[a.coinId]?.[S.base.toLowerCase()];
-    sub = qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase()) + (p != null ? ' × ' + money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0) : ' · prix inconnu');
+    sub = qtyH(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase()) + (p != null ? ' × ' + money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0) : ' · prix inconnu');
   } else {
     const cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100;
     const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
@@ -948,10 +954,10 @@ function coinRows(items){
     const a = list[0], q = list.reduce((s, x) => s + (num(x.qty) || 0), 0), v = list.every(x => value(x) == null) ? null : sumOf(list);
     const wallets = [...new Set(list.map(x => x.inst).filter(Boolean))];
     const where = list.length > 1 ? plural(list.length, 'wallet') : (wallets[0] ? esc(wallets[0]) : '');
-    const sub = qty(q) + ' ' + esc((a.symbol || '').toUpperCase()) + (where ? ' · ' + where : '');
+    const sub = qtyH(q) + ' ' + esc((a.symbol || '').toUpperCase()) + (where ? ' · ' + where : '');
     const name = a.coinName || a.name, id = 'crypto|coin:' + (a.coinId || ('m:' + (a.symbol || a.name).toLowerCase())), open = openInst.has(id);
     const holds = list.slice().sort((x, y) => (value(y) || 0) - (value(x) || 0)).map((h, j) => {
-      const hv = value(h), hs = qty(num(h.qty) || 0) + ' ' + esc((h.symbol || '').toUpperCase()) + (h.note ? ' · ' + esc(h.note) : '');
+      const hv = value(h), hs = qtyH(num(h.qty) || 0) + ' ' + esc((h.symbol || '').toUpperCase()) + (h.note ? ' · ' + esc(h.note) : '');
       return `<button style="--i:${j}" class="row sub" data-id="${h.id}">${instIcon(h.inst || '', 'crypto')}<div class="nm"><div>${h.inst ? esc(h.inst) : 'Sans wallet indiqué'}</div><small>${hs}</small></div><div class="val num">${hv == null ? '—' : money(hv)}</div></button>`;
     }).join('');
     return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}" style="--i:${i}"><button class="row instrow" aria-expanded="${open}">${icon(a)}<div class="nm"><div>${esc(name)}</div><small>${sub}</small></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${holds}</div></div></div>`;
@@ -1524,7 +1530,7 @@ function openAsset(a){
     if (h) $('valHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, v, db]) => `${money((num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0), (a.cur || S.base).toUpperCase())} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → ') + (a.cat === 'immo' ? ' (valeur nette du bien)' : ''); }
   { const h = a?.cat === 'crypto' && a.qtyHist?.length > 1 ? a.qtyHist : null;
     $('qtyHist').classList.toggle('hidden', !h);
-    if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qty(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → '); }
+    if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qtyH(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → '); }
   $('fAdded').value = a ? (a.added || '') : today(); $('fAdded').max = today();
   $('assetMeta').textContent = a ? (a.updated ? 'Modifié le ' + updatedTxt(a) : 'Ajouté ' + addedTxt(a).toLowerCase()) : '';
   coinSearch = false; $('instList').classList.add('hidden'); $('coinList').classList.add('hidden');
@@ -1806,8 +1812,8 @@ function histHtml(a){
   let rows;
   if (a.cat === 'crypto') rows = (a.qtyHist?.length ? a.qtyHist : [[a.added || '', a.qty]]).map(([d, q]) => [d, num(q) || 0]);
   else rows = (a.valHist?.length ? a.valHist : [[a.added || '', a.value, a.debt, a.share]]).map(([d, v, db]) => [d, (num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0)]);
-  const fmt = x => a.cat === 'crypto' ? qty(x) + (sym ? ' ' + esc(sym) : '') : money(x, cur);
-  const fmtD = x => (x >= 0 ? '+' : '−') + (a.cat === 'crypto' ? qty(Math.abs(x)) + (sym ? ' ' + esc(sym) : '') : money(Math.abs(x), cur));
+  const fmt = x => a.cat === 'crypto' ? qtyH(x) + (sym ? ' ' + esc(sym) : '') : money(x, cur);
+  const fmtD = x => (x >= 0 ? '+' : '−') + (a.cat === 'crypto' ? qtyH(Math.abs(x)) + (sym ? ' ' + esc(sym) : '') : money(Math.abs(x), cur));
   const title = a.cat === 'crypto' ? 'Historique des quantités' : a.cat === 'compte' ? 'Historique du solde' : 'Historique de la valeur nette';
   const items = rows.map(([d, v], i) => {
     const diff = i ? v - rows[i - 1][1] : null;
