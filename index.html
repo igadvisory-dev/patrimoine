@@ -318,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.0 · 24/11/2026</div>
+  <div class="ver">Version 6.1 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -681,13 +681,13 @@ function render(){
   if (!S) return;
   const t = totals();
   $('total').textContent = money(t.total);
-  const hist = S.history.filter(h => h.base === S.base);
+  const hist = series(0);
   const ref = hist.filter(h => h.d <= new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE')).pop() || (hist.length > 1 ? hist[0] : null);
   const dl = $('delta');
   if (ref && ref.total){
     const diff = t.total - ref.total;
     dl.className = 'delta ' + (diff >= 0 ? 'up' : 'down');
-    dl.textContent = (diff >= 0 ? '↗ +' : '↘ −') + money(Math.abs(diff)) + ' · ' + pct(diff / ref.total) + ' depuis le ' + new Date(ref.d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+    dl.textContent = (diff >= 0 ? '↗ +' : '↘ −') + money(Math.abs(diff)) + ' · ' + pct(diff / ref.total) + ' depuis le ' + shortDay(ref.d);
   } else { dl.className = 'delta'; dl.textContent = ''; }
   $('priceStatus').textContent = (S.pricesAt ? 'Prix du ' + when(S.pricesAt) : 'Prix jamais actualisés') + (t.missing ? ' · ' + t.missing + ' actif(s) sans prix ni taux' : '');
   drawChart(); drawDonut(t); drawList();
@@ -929,14 +929,36 @@ function drawDonut(t){
     `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${P(v / t.total)}</span></div>`).join('');
 }
 
+// Série d'évolution : historique réel + reconstitution à partir des dates d'ajout des actifs
+// (avant le premier jour d'historique, chaque actif compte à partir de sa date d'ajout, à sa valeur actuelle).
+const shortDay = d => { const x = new Date(d); return x.toLocaleDateString('fr-FR', x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
+function series(rng){
+  const hist = S.history.filter(h => h.base === S.base).map(h => ({d:h.d, total:h.total}));
+  const first = hist.length ? hist[0].d : today();
+  const days = [...new Set(S.assets.map(a => a.added).filter(d => d && d < first))].sort();
+  const pts = [];
+  let prev = null;
+  for (const d of days){
+    const t = S.assets.reduce((sum, a) => sum + ((a.added || first) <= d ? (value(a) || 0) : 0), 0);
+    if (prev != null) pts.push({d, total:prev});
+    pts.push({d, total:t}); prev = t;
+  }
+  if (prev != null && hist.length) pts.push({d:hist[0].d, total:prev});
+  pts.push(...hist);
+  if (!rng) return pts;
+  const from = new Date(Date.now() - rng * 864e5).toLocaleDateString('sv-SE');
+  const before = pts.filter(p => p.d < from).pop();
+  const inRange = pts.filter(p => p.d >= from);
+  return before ? [{d:from, total:before.total}, ...inRange] : inRange;
+}
 function drawSpark(){
   if (!S) return;
-  let pts = S.history.filter(h => h.base === S.base);
-  if (range){ const from = new Date(Date.now() - range * 864e5).toLocaleDateString('sv-SE'); pts = pts.filter(h => h.d >= from); }
+  const pts = series(range);
   const sp = $('spark'), dd = $('evoDelta');
   if (pts.length < 2){ sp.innerHTML = ''; dd.className = 'ovd num'; dd.textContent = '—'; return; }
   const ys = pts.map(p => p.total), y0 = Math.min(...ys), y1 = Math.max(...ys), n = ys.length - 1;
-  const d = ys.map((y, i) => (i ? 'L' : 'M') + (i / n * 80).toFixed(1) + ' ' + (22 - (y - y0) / ((y1 - y0) || 1) * 20).toFixed(1)).join('');
+  const ts = pts.map(p => new Date(p.d).getTime()), t0 = ts[0], t1 = ts[n] || t0 + 1;
+  const d = ys.map((y, i) => (i ? 'L' : 'M') + ((ts[i] - t0) / ((t1 - t0) || 1) * 80).toFixed(1) + ' ' + (22 - (y - y0) / ((y1 - y0) || 1) * 20).toFixed(1)).join('');
   sp.innerHTML = `<path d="${d}" fill="none" stroke="var(--gold)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
   const ch = ys[0] ? (ys[n] - ys[0]) / ys[0] : 0;
   dd.className = 'ovd num ' + (ch >= 0 ? 'up' : 'down');
@@ -946,8 +968,7 @@ function drawChart(){
   drawSpark();
   const s = $('chart'); if (!S) return;
   const W = s.clientWidth, H = s.clientHeight; if (!W) return;
-  let pts = S.history.filter(h => h.base === S.base);
-  if (range) { const from = new Date(Date.now() - range * 864e5).toLocaleDateString('sv-SE'); pts = pts.filter(h => h.d >= from); }
+  const pts = series(range);
   if (pts.length < 2){
     s.innerHTML = `<text x="${W / 2}" y="${H / 2}" text-anchor="middle" fill="var(--mute)" font-size="14">L'historique se construit jour après jour.</text>`;
     return;
@@ -959,7 +980,7 @@ function drawChart(){
   const X = x => L + (x - x0) / (x1 - x0 || 1) * (W - L - Rt), Y = y => T + (1 - (y - y0) / (y1 - y0)) * (H - T - B);
   const line = pts.map((p, i) => (i ? 'L' : 'M') + X(xs[i]).toFixed(1) + ' ' + Y(ys[i]).toFixed(1)).join('');
   const up = ys[ys.length - 1] >= ys[0], col = 'var(--gold)';
-  const lbl = d => new Date(d).toLocaleDateString('fr-FR', {day:'numeric', month:'short'});
+  const lbl = shortDay;
   s.innerHTML = `<defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" style="stop-color:var(--gold)" stop-opacity=".22"/><stop offset="1" style="stop-color:var(--gold)" stop-opacity="0"/></linearGradient></defs>` +
     [.25, .5, .75].map(f => `<line x1="0" x2="${W}" y1="${T + f * (H - T - B)}" y2="${T + f * (H - T - B)}" stroke="var(--line)" stroke-dasharray="2 4"/>`).join('') +
     `<path d="${line}L${X(x1)} ${H - B}L${X(x0)} ${H - B}Z" fill="url(#g)"/>` +
