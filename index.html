@@ -318,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.8 · 24/11/2026</div>
+  <div class="ver">Version 5.9 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -462,10 +462,10 @@ html,body{overscroll-behavior-y:none}
 <script>
 {
 const CATS = {
-  crypto:{label:'Cryptos', one:'Crypto', color:'var(--crypto)', hex:'#6f9fd8', ini:'₿'},
+  crypto:{label:'Crypto', one:'Crypto', color:'var(--crypto)', hex:'#6f9fd8', ini:'₿'},
   societe:{label:'Sociétés', one:'Société', color:'var(--societe)', hex:'#a9b4c2', ini:'S'},
   immo:{label:'Immobilier', one:'Immobilier', color:'var(--immo)', hex:'#b98b73', ini:'I'},
-  compte:{label:'Comptes courants', one:'Compte', color:'var(--compte)', hex:'#6aa99b', ini:'€'}
+  compte:{label:'Cash', one:'Compte', color:'var(--compte)', hex:'#6aa99b', ini:'€'}
 };
 // Principales devises (nom affiché). « crypto » : devise de référence possible (prix CoinGecko disponibles).
 const CURRENCIES = [
