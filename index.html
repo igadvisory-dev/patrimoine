@@ -254,6 +254,27 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .bkbtns .btn{width:auto;margin:0;padding:9px 12px;min-height:40px;font-size:14px}
 #btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
 html.masked .sctip b{letter-spacing:.05em}
+.fab.fab2{right:calc(max(20px,env(safe-area-inset-right)) + 70px);width:50px;height:50px;bottom:calc(26px + env(safe-area-inset-bottom));background:var(--panel);color:var(--gold);border:1px solid var(--line)}
+.fab.fab2 svg{width:22px;height:22px}
+.updsheet{height:92vh;display:flex;flex-direction:column;padding-bottom:0!important}
+#updBody{flex:1;overflow:auto;margin:0 -20px;padding:0 20px 12px;-webkit-overflow-scrolling:touch}
+.ugrp{margin-top:14px}
+.uhead{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--mute);font-weight:500;letter-spacing:.03em;padding-bottom:6px;border-bottom:1px solid var(--line)}
+.ico.badge.sm svg{width:20px;height:20px}
+.urow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
+.urow .nm{flex:1;min-width:0}.urow .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.urow .nm small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.urow .ico{width:34px;height:34px}.urow .ico.badge svg{width:34px;height:34px}
+.ufs{display:flex;flex-direction:column;gap:6px;flex:none;width:150px}
+.uf{display:block;margin:0!important}
+.uf>span:first-child{display:block;font-size:11px;color:var(--mute);margin:0 0 2px 4px}
+.ui{display:flex;align-items:center;background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding-right:10px;transition:border-color .2s,background .2s}
+.ui input{border:0;background:none;min-height:40px!important;padding:8px 6px 8px 10px!important;text-align:right;font-variant-numeric:tabular-nums}
+.ui input:focus{outline:none}
+.ui em{font-style:normal;font-size:13px;color:var(--mute);flex:none}
+.uf.chg .ui{border-color:var(--gold);background:var(--goldsoft)}
+.ufoot{position:sticky;bottom:0;margin:0 -20px;padding:10px 20px calc(14px + env(safe-area-inset-bottom));background:var(--panel);border-top:1px solid var(--line)}
+.ufoot .btn{margin:0}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -347,7 +368,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.5 · 24/11/2026</div>
+  <div class="ver">Version 7.6 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -390,6 +411,7 @@ html,body{overscroll-behavior-y:none}
 
     <section class="card" id="list"></section>
   </main>
+  <button class="fab fab2" id="btnUpd" aria-label="Actualiser les montants"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h6"/><path d="m14.5 17.5 5.8-5.8a1.6 1.6 0 0 0-2.3-2.3l-5.8 5.8-.7 3z"/></svg></button>
   <button class="fab" id="btnAdd" aria-label="Ajouter un actif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
 
@@ -487,6 +509,13 @@ html,body{overscroll-behavior-y:none}
   </div>
   <button class="btn" type="button" id="bkGo">Chiffrer</button>
   <button class="btn hidden" type="button" id="bkShare">Enregistrer le fichier</button>
+</div></div>
+
+<!-- Actualisation rapide -->
+<div class="sheet hidden" id="updSheet"><div class="fsheet updsheet">
+  <header><div><h2>Actualisation</h2><div class="hint" style="margin-top:2px">Modifie seulement ce qui a changé.</div></div><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
+  <div id="updBody"></div>
+  <div class="ufoot"><button class="btn" type="button" id="updSave">Aucune modification</button></div>
 </div></div>
 
 <!-- Dialogue de confirmation -->
@@ -1271,7 +1300,7 @@ function fmtAmount(str){
   return dec == null ? intF : (intF || '0') + ',' + dec;
 }
 const numStr = v => { const n = num(v); return n == null ? '' : String(n); };
-AMOUNT_IDS.forEach(id => $(id).addEventListener('input', e => {
+function amountInput(e){
   const el = e.target, pos = el.selectionStart ?? el.value.length;
   const kept = el.value.slice(0, pos).replace(/[^\d.,]/g, '').length;
   const f = fmtAmount(el.value);
@@ -1280,7 +1309,8 @@ AMOUNT_IDS.forEach(id => $(id).addEventListener('input', e => {
   let n = 0, i = 0;
   while (i < f.length && n < kept){ if (f[i] !== NBSP) n++; i++; }
   try { el.setSelectionRange(i, i); } catch(err){}
-}));
+}
+AMOUNT_IDS.forEach(id => $(id).addEventListener('input', amountInput));
 
 /* ---------- Feuille actif ---------- */
 let editing = null, cat = 'compte', coin = null, searchT = 0;
@@ -1565,7 +1595,7 @@ document.querySelectorAll('.sheet').forEach(s => s.addEventListener('click', e =
 document.querySelectorAll('.sheet').forEach(sh => {
   if (sh.id === 'dlg') return;
   const panel = sh.firstElementChild; let y0 = null, dy = 0;
-  panel.addEventListener('touchstart', e => { y0 = panel.scrollTop <= 0 ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
+  panel.addEventListener('touchstart', e => { y0 = panel.scrollTop <= 0 && !e.target.closest('#updBody, .picklist') ? e.touches[0].clientY : null; dy = 0; }, {passive:true});
   panel.addEventListener('touchmove', e => {
     if (y0 == null) return; dy = Math.max(0, e.touches[0].clientY - y0);
     if (dy > 0){ panel.style.transition = 'none'; panel.style.transform = `translateY(${dy}px)`; if (e.cancelable) e.preventDefault(); }
@@ -1624,6 +1654,65 @@ function openMaps(addr){
   show('mapSheet');
 }
 $('mapSheet').addEventListener('click', e => { if (e.target.closest('.maplink')) setTimeout(() => hideSheet('mapSheet'), 300); });
+/* ---------- Page d'actualisation rapide ---------- */
+const nowISO = () => new Date().toISOString();
+function pushQty(a, q){
+  const h = a.qtyHist?.length ? a.qtyHist.map(x => x.slice()) : [[a.added || LEGACY, a.qty]];
+  a.qty = q;
+  const last = h[h.length - 1];
+  if (num(last[1]) !== num(q)){ if (last[0] >= today()) last[1] = q; else h.push([today(), q]); }
+  a.qtyHist = h; a.updated = nowISO();
+}
+function pushVal(a, v, debt){
+  const h = a.valHist?.length ? a.valHist.map(x => x.slice()) : [[a.added || LEGACY, a.value, a.debt || '', a.share || '']];
+  a.value = v; if (a.cat === 'immo'){ if (num(debt)) a.debt = debt; else delete a.debt; }
+  const cur3 = [a.value, a.debt || '', a.share || ''], last = h[h.length - 1];
+  const same = [0, 1, 2].every(i => (num(last[i + 1]) ?? null) === (num(cur3[i]) ?? null));
+  if (!same){ if (last[0] >= today()) last.splice(1, 3, ...cur3); else h.push([today(), ...cur3]); }
+  a.valHist = h; a.updated = nowISO();
+}
+function openUpdate(){
+  const order = Object.entries(CATS).sort(([a], [b]) => sumOf(S.assets.filter(x => x.cat === b)) - sumOf(S.assets.filter(x => x.cat === a)));
+  const field = (a, key, val, unit, lbl) => `<label class="uf"><span>${lbl}</span><span class="ui"><input class="amt" inputmode="decimal" data-id="${a.id}" data-k="${key}" data-orig="${esc(numStr(val))}" value="${esc(fmtAmount(String(num(val) ?? '').replace('.', ',')))}"><em>${esc(unit)}</em></span></label>`;
+  $('updBody').innerHTML = order.map(([c, meta]) => {
+    const items = S.assets.filter(a => a.cat === c).sort((x, y) => (value(y) || 0) - (value(x) || 0));
+    if (!items.length) return '';
+    return `<div class="ugrp"><div class="uhead">${catBadge(c) ? `<span class="ico badge sm">${catBadge(c)}</span>` : ''}${meta.label}</div>` + items.map(a => {
+      const cur = (a.cur || S.base).toUpperCase();
+      const sub = [a.inst, a.cat === 'crypto' ? '' : (cur !== S.base ? cur : '')].filter(Boolean).map(esc).join(' · ');
+      const ic = a.cat === 'immo' ? `<span class="ico badge">${HOUSE_BADGE}</span>` : icon(a);
+      const inputs = a.cat === 'crypto' ? field(a, 'qty', a.qty, (a.symbol || '').toUpperCase(), 'Quantité')
+        : a.cat === 'immo' ? field(a, 'value', a.value, CUR_SYM[cur] || cur, 'Valeur') + field(a, 'debt', a.debt || 0, CUR_SYM[cur] || cur, 'Crédit')
+        : field(a, 'value', a.value, CUR_SYM[cur] || cur, a.cat === 'compte' ? 'Solde' : 'Valeur');
+      return `<div class="urow">${ic}<div class="nm"><div>${esc(a.cat === 'crypto' ? (a.coinName || a.name) : a.name)}</div>${sub ? `<small>${sub}</small>` : ''}</div><div class="ufs">${inputs}</div></div>`;
+    }).join('') + '</div>';
+  }).join('') || '<div class="empty">Aucun actif à actualiser.</div>';
+  updCount(); show('updSheet');
+}
+function updChanged(){ return [...$('updBody').querySelectorAll('input.amt')].filter(i => (num(i.value) ?? null) !== (num(i.dataset.orig) ?? null)); }
+function updCount(){
+  const n = updChanged().length;
+  $('updBody').querySelectorAll('input.amt').forEach(i => i.closest('.uf').classList.toggle('chg', (num(i.value) ?? null) !== (num(i.dataset.orig) ?? null)));
+  $('updSave').textContent = n ? `Enregistrer ${n} modification${n > 1 ? 's' : ''}` : 'Aucune modification';
+  $('updSave').classList.toggle('sec', !n);
+}
+$('updBody').addEventListener('input', e => { if (e.target.matches('input.amt')){ amountInput(e); updCount(); } });
+$('updBody').addEventListener('focusin', e => { if (e.target.matches('input.amt')) setTimeout(() => e.target.select?.(), 0); });
+$('updSave').addEventListener('click', async () => {
+  const ch = updChanged();
+  if (!ch.length){ hideSheet('updSheet'); return; }
+  const byId = {};
+  for (const i of ch) (byId[i.dataset.id] = byId[i.dataset.id] || {})[i.dataset.k] = numStr(i.value);
+  for (const [id, f] of Object.entries(byId)){
+    const a = S.assets.find(x => x.id === id); if (!a) continue;
+    if (a.cat === 'crypto') pushQty(a, f.qty ?? a.qty);
+    else pushVal(a, f.value ?? a.value, f.debt ?? a.debt);
+  }
+  hideSheet('updSheet'); await commit();
+  const n = Object.keys(byId).length;
+  toast(n + ' actif' + (n > 1 ? 's' : '') + ' mis à jour');
+});
+$('btnUpd').addEventListener('click', () => openUpdate());
 let toastT = 0;
 function toast(m){ const t = $('toast'); t.textContent = m; t.classList.remove('hidden'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.add('hidden'), 2800); }
 
