@@ -318,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.1 · 24/11/2026</div>
+  <div class="ver">Version 6.2 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -512,7 +512,7 @@ async function openVault(pin){
   key = k; salt = unb64(v.salt);
   S = migrate(JSON.parse(new TextDecoder().decode(pt)));
 }
-function fresh(){ return {v:1, base:'EUR', assets:[], prices:{}, logos:{}, fx:{rates:{}, t:0, manual:{}}, history:[]}; }
+function fresh(){ return {v:1, base:'EUR', assets:[], prices:{}, logos:{}, priceHist:{}, fx:{rates:{}, t:0, manual:{}}, history:[]}; }
 function migrate(s){ const f = fresh(); return Object.assign(f, s, {fx:Object.assign(f.fx, s.fx || {})}); }
 
 /* ---------- Face ID (WebAuthn) ---------- */
@@ -637,6 +637,7 @@ function unlocked(){
   $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); applyUi();
   render();
   if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 60000) refresh(true, true);
+  setTimeout(() => fetchHistory(false), 1500);
 }
 
 /* ---------- Calculs ---------- */
@@ -929,21 +930,98 @@ function drawDonut(t){
     `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${P(v / t.total)}</span></div>`).join('');
 }
 
-// Série d'évolution : historique réel + reconstitution à partir des dates d'ajout des actifs
-// (avant le premier jour d'historique, chaque actif compte à partir de sa date d'ajout, à sa valeur actuelle).
 const shortDay = d => { const x = new Date(d); return x.toLocaleDateString('fr-FR', x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
+// ---------- Historique des cours (cryptos) et des taux de change ----------
+function lastAtOrBefore(arr, d){ // arr trié [[jour, valeur], …]
+  let lo = 0, hi = arr.length - 1, r = -1;
+  while (lo <= hi){ const m = (lo + hi) >> 1; if (arr[m][0] <= d){ r = m; lo = m + 1; } else hi = m - 1; }
+  return r < 0 ? (arr.length ? arr[0][1] : null) : arr[r][1];
+}
+function priceAt(a, d){
+  const manual = num(a.price); if (manual != null) return manual;
+  const h = S.priceHist?.[a.coinId];
+  if (h && h.base === S.base && h.pts.length) return lastAtOrBefore(h.pts, d);
+  return S.prices[a.coinId]?.[S.base.toLowerCase()] ?? null;
+}
+function fxAt(cur, d){
+  cur = (cur || S.base).toUpperCase();
+  if (cur === S.base) return 1;
+  const m = num(S.fx.manual[cur]); if (m) return m;
+  const fh = S.fxHist;
+  if (fh && fh.base === S.base && fh.days?.length){
+    const rates = lastAtOrBefore(fh.days, d) || {};
+    if (rates[cur]) return rates[cur];
+    const peg = PEGS[cur];
+    if (peg){ const ar = peg[0] === S.base ? 1 : rates[peg[0]]; if (ar) return ar * peg[1]; }
+  }
+  return rate(cur);
+}
+function valueAt(a, d){
+  if (a.cat === 'crypto'){ const p = priceAt(a, d); return p == null ? 0 : (num(a.qty) || 0) * p; }
+  const r = fxAt(a.cur, d); if (!r) return 0;
+  const share = a.cat === 'compte' ? 100 : (num(a.share) ?? 100);
+  const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
+  return ((num(a.value) || 0) - debt) * share / 100 / r;
+}
+const firstHistDay = () => { const h = S.history.filter(x => x.base === S.base); return h.length ? h[0].d : today(); };
+let histBusy = false;
+async function fetchHistory(force){
+  if (!S || histBusy || !navigator.onLine) return;
+  const first = firstHistDay();
+  const need = S.assets.filter(a => a.added && a.added < first);
+  if (!need.length) return;
+  histBusy = true;
+  try {
+    S.priceHist = S.priceHist || {};
+    let changed = false;
+    const bc = S.base.toLowerCase();
+    const minAdded = need.map(a => a.added).sort()[0];
+    for (const id of [...new Set(need.filter(a => a.cat === 'crypto' && a.coinId && num(a.price) == null).map(a => a.coinId))]){
+      const h = S.priceHist[id];
+      if (!force && h && h.base === S.base && Date.now() - h.t < 6 * 3600e3 && (h.pts[0]?.[0] || '9') <= minAdded) continue;
+      let data = null;
+      for (const days of ['max', '365']){
+        try { data = await getJSON(`https://api.coingecko.com/api/v3/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${bc}&days=${days}&interval=daily`); if (data?.prices?.length) break; } catch(e){ data = null; }
+      }
+      if (!S) return;
+      if (data?.prices?.length){
+        const m = {}; for (const [t, p] of data.prices) m[new Date(t).toLocaleDateString('sv-SE')] = p;
+        S.priceHist[id] = {base:S.base, t:Date.now(), pts:Object.entries(m).sort((x, y) => x[0] < y[0] ? -1 : 1)};
+        changed = true;
+      }
+    }
+    const curs = [...new Set(need.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()).filter(c => c !== S.base))];
+    if (curs.length){
+      const syms = [...new Set(curs.map(c => PEGS[c] ? PEGS[c][0] : c).filter(c => c !== S.base))];
+      const fh = S.fxHist;
+      const stale = !fh || fh.base !== S.base || Date.now() - (fh.t || 0) > 12 * 3600e3 || (fh.from || '9') > minAdded || syms.some(c => !(fh.syms || []).includes(c));
+      if ((force || stale) && syms.length){
+        const urls = [`https://api.frankfurter.dev/v1/${minAdded}..?base=${S.base}&symbols=${syms.join(',')}`, `https://api.frankfurter.app/${minAdded}..?from=${S.base}&to=${syms.join(',')}`];
+        for (const u of urls){
+          try { const d = await getJSON(u); if (d?.rates && S){ S.fxHist = {base:S.base, t:Date.now(), from:minAdded, syms, days:Object.entries(d.rates).sort((x, y) => x[0] < y[0] ? -1 : 1)}; changed = true; break; } } catch(e){}
+        }
+      } else if (!syms.length && (!fh || fh.base !== S.base)){ S.fxHist = {base:S.base, t:Date.now(), from:minAdded, syms:[], days:[]}; }
+    }
+    if (changed && S){ render(); await save(); }
+  } finally { histBusy = false; }
+}
+// Série d'évolution : historique réel + reconstitution avant le premier jour d'historique,
+// avec les cours et taux de change de l'époque (les autres actifs gardent leur valeur saisie).
 function series(rng){
   const hist = S.history.filter(h => h.base === S.base).map(h => ({d:h.d, total:h.total}));
   const first = hist.length ? hist[0].d : today();
-  const days = [...new Set(S.assets.map(a => a.added).filter(d => d && d < first))].sort();
+  const addeds = S.assets.map(a => a.added).filter(d => d && d < first).sort();
   const pts = [];
-  let prev = null;
-  for (const d of days){
-    const t = S.assets.reduce((sum, a) => sum + ((a.added || first) <= d ? (value(a) || 0) : 0), 0);
-    if (prev != null) pts.push({d, total:prev});
-    pts.push({d, total:t}); prev = t;
+  if (addeds.length){
+    const start = new Date(addeds[0] + 'T12:00:00'), end = new Date(first + 'T12:00:00');
+    const span = Math.round((end - start) / 864e5), step = Math.max(1, Math.ceil(span / 400));
+    const days = new Set(addeds);
+    for (let i = 0; i < span; i += step) days.add(new Date(start.getTime() + i * 864e5).toLocaleDateString('sv-SE'));
+    for (const d of [...days].sort()){
+      if (d >= first) continue;
+      pts.push({d, total:S.assets.reduce((sum, a) => sum + ((a.added || first) <= d ? valueAt(a, d) : 0), 0)});
+    }
   }
-  if (prev != null && hist.length) pts.push({d:hist[0].d, total:prev});
   pts.push(...hist);
   if (!rng) return pts;
   const from = new Date(Date.now() - rng * 864e5).toLocaleDateString('sv-SE');
@@ -1255,6 +1333,7 @@ $('assetForm').addEventListener('submit', async e => {
   { const d = $('fAdded').value; if (d) a.added = d; else if (!editing) a.added = today(); }
   a.updated = new Date().toISOString();
   if (!editing) S.assets.push(a);
+  setTimeout(() => fetchHistory(false), 300);
   hideSheet('assetSheet'); await commit();
   const needP = a.cat === 'crypto' && a.coinId && !S.prices[a.coinId];
   const needF = a.cat !== 'crypto' && !rate(a.cur);
@@ -1280,7 +1359,7 @@ $('sBase').addEventListener('change', async e => {
   S.base = nb;
   if (r){ const nr = {}; for (const k in S.fx.rates) nr[k] = S.fx.rates[k] / r; nr[old] = 1 / r; delete nr[nb]; S.fx.rates = nr; } else S.fx.rates = {};
   S.fx.manual = {};
-  await commit(); drawFx(); refresh(true);
+  await commit(); drawFx(); refresh(true); fetchHistory(true);
 });
 $('btnExport').addEventListener('click', async () => {
   const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
