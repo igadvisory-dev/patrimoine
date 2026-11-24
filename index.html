@@ -318,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.3 · 24/11/2026</div>
+  <div class="ver">Version 6.4 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -404,6 +404,7 @@ html,body{overscroll-behavior-y:none}
         <div id="shareWrap"><label for="fShare">Part détenue (%)</label><input id="fShare" inputmode="decimal" placeholder="100"></div>
         <div id="debtWrap"><label for="fDebt">Crédit restant dû</label><input id="fDebt" inputmode="decimal" placeholder="0"></div>
       </div>
+      <div class="hint hidden" id="valHist"></div>
     </div>
 
     <div class="frow"><label for="fAdded">Ajouté le</label><input type="date" id="fAdded"></div>
@@ -960,9 +961,11 @@ function fxAt(cur, d){
 function valueAt(a, d){
   if (a.cat === 'crypto'){ const p = priceAt(a, d); if (p == null) return 0; const q = a.qtyHist?.length ? num(lastAtOrBefore(a.qtyHist, d)) : num(a.qty); return (q || 0) * p; }
   const r = fxAt(a.cur, d); if (!r) return 0;
-  const share = a.cat === 'compte' ? 100 : (num(a.share) ?? 100);
-  const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
-  return ((num(a.value) || 0) - debt) * share / 100 / r;
+  let v = a.value, db = a.debt, sh = a.share;
+  if (a.valHist?.length){ let e = a.valHist[0]; for (const x of a.valHist){ if (x[0] <= d) e = x; else break; } [, v, db, sh] = e; }
+  const share = a.cat === 'compte' ? 100 : (num(sh) ?? 100);
+  const debt = a.cat === 'immo' ? (num(db) || 0) : 0;
+  return ((num(v) || 0) - debt) * share / 100 / r;
 }
 const firstHistDay = () => { const h = S.history.filter(x => x.base === S.base); return h.length ? h[0].d : today(); };
 let histBusy = false;
@@ -1286,6 +1289,9 @@ $('coinResults').addEventListener('click', e => {
   $('coinList').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
 });
 function openAsset(a){
+  { const h = a && a.cat !== 'crypto' && a.valHist?.length > 1 ? a.valHist : null;
+    $('valHist').classList.toggle('hidden', !h);
+    if (h) $('valHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, v, db]) => `${money((num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0), (a.cur || S.base).toUpperCase())} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → ') + (a.cat === 'immo' ? ' (valeur nette du bien)' : ''); }
   { const h = a?.cat === 'crypto' && a.qtyHist?.length > 1 ? a.qtyHist : null;
     $('qtyHist').classList.toggle('hidden', !h);
     if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qty(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → '); }
@@ -1319,6 +1325,7 @@ $('assetForm').addEventListener('submit', async e => {
   e.preventDefault();
   const a = editing || {id:uid()};
   const oldQty = editing && editing.cat === 'crypto' ? editing.qty : null, oldAdded = editing?.added;
+  const oldVals = editing && editing.cat !== 'crypto' && editing.cat === cat ? [editing.value, editing.debt || '', editing.share || ''] : null;
   a.cat = cat; a.name = (cat === 'crypto' && coin) ? coin.name : $('fName').value.trim();
   if (!a.name){ toast('Indique un nom'); return; } a.inst = instNew ? $('fInst').value.trim() : instVal; a.note = $('fNote').value.trim();
   if (cat === 'crypto'){
@@ -1344,7 +1351,18 @@ $('assetForm').addEventListener('submit', async e => {
     const last = h[h.length - 1];
     if (num(last[1]) !== num(a.qty)){ if (last[0] >= today()) last[1] = a.qty; else h.push([today(), a.qty]); }
     a.qtyHist = h.sort((x, y) => x[0] < y[0] ? -1 : 1);
-  } else delete a.qtyHist;
+    delete a.valHist;
+  } else {
+    // Historique des montants (valeur / solde, crédit, part) : le nouveau montant s'applique à partir d'aujourd'hui.
+    delete a.qtyHist;
+    const cur3 = [a.value, a.debt || '', a.share || ''];
+    let h = (a.valHist && a.valHist.length && editing && editing.cat === cat) ? a.valHist.map(x => x.slice()) : (oldVals ? [[oldAdded || a.added || LEGACY, ...oldVals]] : []);
+    if (!h.length) h = [[a.added || today(), ...cur3]];
+    if (a.added) h[0][0] = a.added < h[0][0] || h.length === 1 ? a.added : h[0][0];
+    const last = h[h.length - 1], same = (x, y) => [0, 1, 2].every(i => (num(x[i + 1]) ?? null) === (num(y[i]) ?? null));
+    if (!same(last, cur3)){ if (last[0] >= today()) last.splice(1, 3, ...cur3); else h.push([today(), ...cur3]); }
+    a.valHist = h.sort((x, y) => x[0] < y[0] ? -1 : 1);
+  }
   a.updated = new Date().toISOString();
   if (!editing) S.assets.push(a);
   setTimeout(() => fetchHistory(false), 300);
