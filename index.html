@@ -225,6 +225,16 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .cpk.small .pickbtn .ico.mini{width:22px;height:22px}
 .cpk.small .pickbtn .pv{overflow:visible}
 .cpk .picklist .on .pn{font-weight:400}
+.pwf{position:relative}
+.pwf input{width:100%;padding-right:84px!important}
+.pwf .pweye{position:absolute;right:4px;top:50%;transform:translateY(-50%);width:40px;height:40px;display:grid;place-items:center;color:var(--mute);border-radius:10px}
+.pwf .pweye:active{opacity:.6}
+.pwf .pwok{position:absolute;right:46px;top:50%;width:24px;height:24px;margin-top:-12px;border-radius:50%;display:grid;place-items:center;transform:scale(.4);opacity:0;transition:transform .25s cubic-bezier(.3,1.5,.5,1),opacity .2s}
+.pwf .pwok.ok,.pwf .pwok.ko{transform:none;opacity:1}
+.pwf .pwok.ok{background:color-mix(in srgb,var(--up) 18%,transparent);color:var(--up)}
+.pwf .pwok.ko{background:color-mix(in srgb,var(--down) 18%,transparent);color:var(--down)}
+.pwf input.ko{border-color:color-mix(in srgb,var(--down) 55%,transparent)}
+.pwf input.ok{border-color:color-mix(in srgb,var(--up) 55%,transparent)}
 .pksearch{min-height:40px!important;margin:2px 0 4px;font-size:16px}
 .pkhead{font-size:12px;color:var(--mute);padding:6px 8px 2px;letter-spacing:.03em}
 .ico.mini.clogo{background:#fff;border-radius:50%}
@@ -389,7 +399,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.0 · 24/11/2026</div>
+  <div class="ver">Version 9.1 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -525,8 +535,8 @@ html,body{overscroll-behavior-y:none}
   <header><h2 id="bkTitle">Sauvegarde chiffrée</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
   <p class="hint" id="bkMsg" style="font-size:14px;margin:4px 0 0"></p>
   <div id="bkForm">
-    <label for="bkPw">Mot de passe</label><input id="bkPw" type="password" autocomplete="new-password">
-    <div id="bkPw2Wrap"><label for="bkPw2">Confirmer</label><input id="bkPw2" type="password" autocomplete="new-password"></div>
+    <label for="bkPw">Mot de passe</label><div class="pwf"><input id="bkPw" type="password" autocomplete="new-password"><span class="pwok" id="bkOk1" aria-hidden="true"></span><button type="button" class="pweye" data-for="bkPw" aria-label="Afficher le mot de passe"></button></div>
+    <div id="bkPw2Wrap"><label for="bkPw2">Confirmer</label><div class="pwf"><input id="bkPw2" type="password" autocomplete="new-password"><span class="pwok" id="bkOk2" aria-live="polite"></span><button type="button" class="pweye" data-for="bkPw2" aria-label="Afficher le mot de passe"></button></div></div>
   </div>
   <button class="btn" type="button" id="bkGo">Chiffrer</button>
   <button class="btn hidden" type="button" id="bkShare">Enregistrer le fichier</button>
@@ -1609,11 +1619,28 @@ function openBk(mode){
   bkMode = mode; bkFile = null;
   $('bkTitle').textContent = mode === 'export' ? 'Sauvegarde chiffrée' : 'Sauvegarde protégée';
   $('bkMsg').textContent = mode === 'export' ? 'Choisis un mot de passe (8 caractères minimum). Il sera demandé pour restaurer : sans lui, le fichier est illisible.' : 'Saisis le mot de passe de cette sauvegarde.';
-  $('bkPw').value = ''; $('bkPw2').value = ''; $('bkPw2Wrap').classList.toggle('hidden', mode !== 'export');
+  $('bkPw').value = ''; $('bkPw2').value = ''; document.querySelectorAll('.pweye').forEach(b => { $(b.dataset.for).type = 'password'; b.innerHTML = EYE; }); bkCheck(); $('bkPw2Wrap').classList.toggle('hidden', mode !== 'export');
   $('bkGo').textContent = mode === 'export' ? 'Chiffrer' : 'Déverrouiller'; $('bkGo').classList.remove('hidden'); $('bkShare').classList.add('hidden'); $('bkForm').classList.remove('hidden');
   show('bkSheet'); setTimeout(() => $('bkPw').focus(), 350);
 }
 $('btnExport').addEventListener('click', () => openBk('export'));
+/* Mots de passe : œil pour afficher/masquer, coches vertes/rouges pour la longueur et la correspondance. */
+const EYE = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg>';
+const EYE_OFF = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M10.6 5.1A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6A17.4 17.4 0 0 0 2 12s3.6 7 10 7a9.9 9.9 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2M3 3l18 18"/></svg>';
+const TICK = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7.4 5.8 10 11 4.4"/></svg>';
+const CROSS = '<svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M4 4l6 6M10 4l-6 6"/></svg>';
+document.querySelectorAll('.pweye').forEach(b => {
+  b.innerHTML = EYE;
+  b.addEventListener('pointerdown', e => e.preventDefault()); // garde le clavier ouvert
+  b.addEventListener('click', () => { const i = $(b.dataset.for), on = i.type === 'password'; i.type = on ? 'text' : 'password'; b.innerHTML = on ? EYE_OFF : EYE; b.setAttribute('aria-label', on ? 'Masquer le mot de passe' : 'Afficher le mot de passe'); });
+});
+function bkCheck(){
+  const set = (el, inp, st, lbl) => { el.className = 'pwok' + (st ? ' ' + st : ''); el.innerHTML = st === 'ok' ? TICK : st === 'ko' ? CROSS : ''; el.setAttribute('aria-label', lbl || ''); inp.classList.toggle('ok', st === 'ok'); inp.classList.toggle('ko', st === 'ko'); };
+  const p1 = $('bkPw').value, p2 = $('bkPw2').value, exp = bkMode === 'export';
+  set($('bkOk1'), $('bkPw'), exp && p1 ? (p1.length >= 8 ? 'ok' : 'ko') : '', exp && p1 ? (p1.length >= 8 ? 'Longueur suffisante' : '8 caractères minimum') : '');
+  set($('bkOk2'), $('bkPw2'), exp && p2 ? (p1 === p2 && p1.length >= 8 ? 'ok' : 'ko') : '', exp && p2 ? (p1 === p2 ? (p1.length >= 8 ? 'Les mots de passe correspondent' : '8 caractères minimum') : 'Les mots de passe ne correspondent pas') : '');
+}
+$('bkPw').addEventListener('input', bkCheck); $('bkPw2').addEventListener('input', bkCheck);
 $('bkGo').addEventListener('click', async () => {
   const pw = $('bkPw').value;
   if (bkMode === 'export'){
