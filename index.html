@@ -87,6 +87,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .total{font:400 clamp(40px,12vw,56px)/1.02 var(--serif);letter-spacing:-.01em}
 .delta{display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-top:12px;padding:5px 10px;border-radius:99px;background:var(--panel2)}
 .delta:empty{display:none}
+#delta{display:none!important}
 .delta.up{color:var(--up)}.delta.down{color:var(--down)}
 .status{font-size:13px;color:var(--mute);margin-top:12px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
 .status button{color:var(--gold);font-weight:500;padding:8px 0}
@@ -364,7 +365,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 8.3 · 24/11/2026</div>
+  <div class="ver">Version 8.4 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -381,7 +382,7 @@ html,body{overscroll-behavior-y:none}
     <section class="hero">
       <div class="tlabel">Patrimoine net</div>
       <div class="total num" id="total">—</div>
-      <div class="delta" id="delta"></div>
+      <div class="delta hidden" id="delta"></div>
       <div class="status hidden"><span id="priceStatus"></span><button id="btnRefresh">Actualiser les prix</button></div>
     </section>
 
@@ -391,7 +392,7 @@ html,body{overscroll-behavior-y:none}
         <div class="drill"><div class="ovin">
           <div class="fig"><svg id="chart" aria-label="Évolution du patrimoine"></svg></div>
           <div class="ranges" id="ranges">
-            <button data-r="30">1 M</button><button data-r="182">6 M</button><button data-r="365" class="on">1 A</button><button data-r="0">Tout</button>
+            <button data-r="30">1 M</button><button data-r="182">6 M</button><button data-r="ytd" class="on">YTD</button><button data-r="365">1 A</button><button data-r="0">Tout</button>
           </div>
         </div></div>
       </div>
@@ -554,7 +555,7 @@ const num = s => { const n = parseFloat(String(s ?? '').replace(/\s/g,'').replac
 const today = () => new Date().toLocaleDateString('sv-SE');
 const uid = () => Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
 
-let key = null, salt = null, S = null, range = 365;
+let key = null, salt = null, S = null, range = 'ytd';
 
 /* ---------- Chiffrement (AES-GCM, clé dérivée du code) ---------- */
 const b64 = buf => btoa(String.fromCharCode(...new Uint8Array(buf)));
@@ -1121,7 +1122,7 @@ function series(rng){
   }
   pts.push(...hist);
   if (!rng) return pts;
-  const from = new Date(Date.now() - rng * 864e5).toLocaleDateString('sv-SE');
+  const from = rng === 'ytd' ? new Date().getFullYear() + '-01-01' : new Date(Date.now() - rng * 864e5).toLocaleDateString('sv-SE');
   const before = pts.filter(p => p.d < from).pop();
   const inRange = pts.filter(p => p.d >= from);
   return before ? [{d:from, total:before.total}, ...inRange] : inRange;
@@ -1137,7 +1138,7 @@ function drawSpark(){
   sp.innerHTML = `<path d="${d}" fill="none" stroke="var(--gold)" stroke-width="1.6" vector-effect="non-scaling-stroke" stroke-linejoin="round"/>`;
   const ch = ys[0] ? (ys[n] - ys[0]) / ys[0] : 0;
   dd.className = 'ovd num ' + (ch >= 0 ? 'up' : 'down');
-  dd.textContent = pct(ch) + ' · ' + ({30:'1 M', 182:'6 M', 365:'1 A', 0:'tout'})[range];
+  dd.textContent = pct(ch) + ' · ' + ({30:'1 M', 182:'6 M', ytd:'YTD', 365:'1 A', 0:'tout'})[range];
 }
 function drawChart(){
   drawSpark();
@@ -1203,7 +1204,7 @@ function applyUi(){
 }
 $('ranges').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  range = +b.dataset.r; [...$('ranges').children].forEach(x => x.classList.toggle('on', x === b)); drawChart();
+  range = b.dataset.r === 'ytd' ? 'ytd' : +b.dataset.r; [...$('ranges').children].forEach(x => x.classList.toggle('on', x === b)); drawChart();
 });
 
 /* ---------- Prix et taux ---------- */
