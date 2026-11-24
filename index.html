@@ -252,6 +252,8 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 :root:not([data-theme=dark]) #app header.top .lm-fg{fill:light-dark(#0f2a44,#0f2a44)}
 .bkbtns{display:flex;gap:6px;flex:none}
 .bkbtns .btn{width:auto;margin:0;padding:9px 12px;min-height:40px;font-size:14px}
+#btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
+html.masked .sctip b{letter-spacing:.05em}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -345,7 +347,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.4 · 24/11/2026</div>
+  <div class="ver">Version 7.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -353,6 +355,7 @@ html,body{overscroll-behavior-y:none}
   <header class="top">
     <h1><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" class="lm-bg"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" class="lm-ring"/><g class="lm-fg"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g class="lm-bg"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg>Patrimony</h1>
     <div style="display:flex">
+      <button class="iconbtn" id="btnHide" aria-label="Masquer les montants" aria-pressed="false"><svg class="eye-on" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/></svg><svg class="eye-off" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 5.2A10.4 10.4 0 0 1 12 5c6.4 0 10 7 10 7a17.6 17.6 0 0 1-3.2 4.1M6.6 6.6C3.8 8.4 2 12 2 12s3.6 7 10 7a9.9 9.9 0 0 0 5.4-1.6"/><path d="M9.9 9.9a3 3 0 0 0 4.2 4.2"/><path d="m3 3 18 18"/></svg></button>
       <button class="iconbtn" id="btnLock" aria-label="Verrouiller"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg></button>
       <button class="iconbtn" id="btnSettings" aria-label="Réglages"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></button>
     </div>
@@ -707,7 +710,10 @@ function snapshot(){
 async function commit(){ snapshot(); render(); try { await save(); } catch(e){ toast('Enregistrement impossible'); } }
 
 /* ---------- Format ---------- */
-const money = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
+let hideAmounts = false;
+try { hideAmounts = localStorage.getItem('patrimony.hide') === '1'; } catch(e){}
+const moneyRaw = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
+const money = (v, cur = S.base, d = 0) => hideAmounts ? moneyRaw(0, cur).replace(/[\d\s\u202f\u00a0.,]+/, m => (/^\s|\s$/.test(m) && m.trim() === '' ? m : '••••' + (/\s$/.test(m) ? '\u00a0' : '')) ) : moneyRaw(v, cur, d);
 const qty = v => new Intl.NumberFormat('fr-FR', {maximumFractionDigits:8}).format(v);
 const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
 const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
@@ -1534,6 +1540,9 @@ $('btnWipe').addEventListener('click', async () => {
   localStorage.removeItem(VAULT); disableBio(); S = null; key = null; closeAll(); setLock('setup');
 });
 $('btnLock').addEventListener('click', lock);
+function applyHide(){ document.documentElement.classList.toggle('masked', hideAmounts); $('btnHide').setAttribute('aria-pressed', hideAmounts); $('btnHide').setAttribute('aria-label', hideAmounts ? 'Afficher les montants' : 'Masquer les montants'); }
+$('btnHide').addEventListener('click', () => { hideAmounts = !hideAmounts; try { localStorage.setItem('patrimony.hide', hideAmounts ? '1' : '0'); } catch(e){} applyHide(); render(); if (!$('infoSheet').classList.contains('hidden') && openInfoId) openInfo(openInfoId); });
+applyHide();
 $('btnBioSet').addEventListener('click', async () => { if (bioCfg()){ if (await ask('Désactiver le déverrouillage par Face ID ?')) disableBio(); } else enableBio(); });
 
 /* ---------- Utilitaires d'interface ---------- */
@@ -1592,7 +1601,9 @@ function histHtml(a){
   }).reverse().join('');
   return `<div class="thead">${title}</div><div class="tl">${items}</div>`;
 }
+let openInfoId = null;
 function openInfo(id){
+  openInfoId = id;
   const a = S.assets.find(x => x.id === id); if (!a) return;
   $('infoTitle').textContent = a.name;
   const kv = (k, x) => `<div class="kv"><span>${k}</span><b>${x}</b></div>`;
