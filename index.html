@@ -93,6 +93,9 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .card h2{font-size:13px;margin:0 0 14px;color:var(--mute);font-weight:500;letter-spacing:.04em}
 .fig{position:relative;height:190px}
 .fig svg{position:absolute;inset:0;width:100%;height:100%}
+.fig{touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
+.sctip{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.3;pointer-events:none;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.2);z-index:2}
+.sctip b{font-size:14px;font-weight:700}
 .ranges{display:flex;gap:4px;margin-top:12px;background:var(--panel2);border-radius:12px;padding:3px}
 .ranges button{flex:1;padding:7px 0;border-radius:9px;font-size:13px;color:var(--mute);min-height:34px}
 .ranges button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
@@ -342,7 +345,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.2 · 24/11/2026</div>
+  <div class="ver">Version 7.3 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1106,9 +1109,35 @@ function drawChart(){
     `<path d="${line}L${X(x1)} ${H - B}L${X(x0)} ${H - B}Z" fill="url(#g)"/>` +
     `<path d="${line}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` +
     `<circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="7" fill="var(--goldsoft)"/><circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="3.5" fill="${col}"/>` +
-    `<text x="${L}" y="14" fill="var(--mute)" font-size="12">${money(Math.max(...ys))} max</text>` +
+    `<text id="scMax" x="${L}" y="14" fill="var(--mute)" font-size="12">${money(Math.max(...ys))} max</text>` +
     `<text x="${L}" y="${H - 5}" fill="var(--mute)" font-size="12">${lbl(pts[0].d)}</text>` +
-    `<text x="${W - Rt}" y="${H - 5}" fill="var(--mute)" font-size="12" text-anchor="end">${lbl(pts[pts.length - 1].d)}</text>`;
+    `<text x="${W - Rt}" y="${H - 5}" fill="var(--mute)" font-size="12" text-anchor="end">${lbl(pts[pts.length - 1].d)}</text>` +
+    `<g id="scrub" style="display:none"><line id="scLine" y1="${T - 4}" y2="${H - B}" stroke="var(--mute)" stroke-width="1" stroke-dasharray="3 3"/><circle id="scDot" r="5" fill="var(--gold)" stroke="var(--panel)" stroke-width="2"/></g>`;
+  chartState = {pts, xs, ys, X, Y, W, x0, x1};
+}
+let chartState = null;
+{
+  const fig = $('chart').parentElement, tip = document.createElement('div');
+  tip.className = 'sctip hidden'; fig.appendChild(tip);
+  let active = false;
+  const at = clientX => {
+    const st = chartState; if (!st) return;
+    const r = $('chart').getBoundingClientRect(), x = Math.max(0, Math.min(st.W, clientX - r.left));
+    const t = st.x0 + (x - 4) / ((st.W - 8) || 1) * (st.x1 - st.x0);
+    let i = 0; for (let k = 0; k < st.xs.length; k++){ if (st.xs[k] <= t) i = k; else break; }
+    const px = st.X(st.xs[i]), py = st.Y(st.ys[i]);
+    const g = $('scrub'); if (!g) return; g.style.display = '';
+    $('scLine').setAttribute('x1', px); $('scLine').setAttribute('x2', px);
+    $('scDot').setAttribute('cx', px); $('scDot').setAttribute('cy', py);
+    const d = new Date(st.pts[i].d + 'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'short', year:'numeric'});
+    tip.innerHTML = `<b class="num">${money(st.ys[i])}</b><span>${d}</span>`;
+    tip.classList.remove('hidden'); if ($('scMax')) $('scMax').style.display = 'none';
+    const w = tip.offsetWidth; tip.style.left = Math.max(0, Math.min(st.W - w, px - w / 2)) + 'px';
+  };
+  const end = () => { active = false; const g = $('scrub'); if (g) g.style.display = 'none'; tip.classList.add('hidden'); if ($('scMax')) $('scMax').style.display = ''; };
+  fig.addEventListener('pointerdown', e => { active = true; try { fig.setPointerCapture(e.pointerId); } catch(err){} at(e.clientX); });
+  fig.addEventListener('pointermove', e => { if (active) at(e.clientX); });
+  ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => fig.addEventListener(ev, end));
 }
 const chartObs = new ResizeObserver(drawChart); chartObs.observe($('chart'));
 document.querySelectorAll('.ovrow').forEach(b => b.addEventListener('click', () => {
@@ -1189,7 +1218,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S 
     ptr.classList.toggle('ready', d >= TH && !busy);
   };
   document.addEventListener('touchstart', e => {
-    if (busy || !S || sheetOpen() || window.scrollY > 0 || e.touches.length > 1) { y0 = null; return; }
+    if (busy || !S || sheetOpen() || window.scrollY > 0 || e.touches.length > 1 || e.target.closest('.fig')) { y0 = null; return; }
     y0 = e.touches[0].clientY; dy = 0;
   }, {passive:true});
   document.addEventListener('touchmove', e => {
