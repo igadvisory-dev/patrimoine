@@ -45,7 +45,8 @@ label{display:block;font-size:13px;color:var(--mute);margin:14px 0 6px;letter-sp
 .num{font-variant-numeric:tabular-nums;white-space:nowrap}
 
 /* Verrouillage */
-#lock{position:fixed;inset:0;background:#07131f;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:50;padding:24px}
+#lock{position:fixed;left:0;right:0;top:calc(-1 * env(safe-area-inset-top));bottom:calc(-1 * env(safe-area-inset-bottom));min-height:100lvh;background:#07131f;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:24px;z-index:50;padding:calc(24px + env(safe-area-inset-top)) 24px calc(24px + env(safe-area-inset-bottom))}
+html.locked,html.locked body{background:#07131f}
 #lock .mark{width:64px;height:64px}
 #lock h1{font:400 28px var(--serif);margin:0;letter-spacing:.01em}
 .ver{text-align:center;font-size:12px;color:#5d6f84;letter-spacing:.03em;margin-top:-4px}
@@ -237,6 +238,15 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .tmain b{font-weight:600}.tmain small{color:var(--mute);font-size:12.5px}
 .tchg{font-size:13px;font-weight:600}.tchg.up{color:var(--up)}.tchg.down{color:var(--down)}
 #infoSheet .btn{margin-top:16px}
+ #app{position:relative;z-index:0}
+.topband{position:absolute;left:0;right:0;top:calc(-1 * env(safe-area-inset-top));height:calc(env(safe-area-inset-top) + 260px);background:light-dark(#0f2a44,#07131f);z-index:-1;border-radius:0 0 28px 28px}
+:root:not([data-theme=dark]) #app header.top h1,:root:not([data-theme=dark]) #app .total{color:light-dark(#fff,var(--ink))}
+:root:not([data-theme=dark]) #app .tlabel,:root:not([data-theme=dark]) #app .iconbtn{color:light-dark(#b9c6d4,var(--mute))}
+:root:not([data-theme=dark]) #app .delta{background:light-dark(rgba(255,255,255,.1),var(--panel2))}
+:root:not([data-theme=dark]) #app .delta.up{color:light-dark(#7fe0b0,var(--up))}
+:root:not([data-theme=dark]) #app .delta.down{color:light-dark(#ffab9f,var(--down))}
+:root:not([data-theme=dark]) #app header.top .lm-bg{fill:light-dark(#fff,#fff)}
+:root:not([data-theme=dark]) #app header.top .lm-fg{fill:light-dark(#0f2a44,#0f2a44)}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -330,11 +340,11 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.8 · 24/11/2026</div>
+  <div class="ver">Version 6.9 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
-<div id="app" class="hidden">
+<div id="app" class="hidden"><div class="topband" id="topband"></div>
   <header class="top">
     <h1><svg viewBox="0 0 64 64" aria-hidden="true"><path d="M32 3 57.1 17.5v29L32 61 6.9 46.5v-29Z" class="lm-bg"/><path d="M32 9.5 51.5 20.75v22.5L32 54.5 12.5 43.25v-22.5Z" fill="none" stroke-width="1.2" class="lm-ring"/><g class="lm-fg"><circle cx="32" cy="9.5" r="2"/><circle cx="51.5" cy="20.75" r="2"/><circle cx="51.5" cy="43.25" r="2"/><circle cx="32" cy="54.5" r="2"/><circle cx="12.5" cy="43.25" r="2"/><circle cx="12.5" cy="20.75" r="2"/><path d="M32 15 46.5 27.2c.6.5.3 1.4-.5 1.4H44V43c0 .8-.7 1.5-1.5 1.5h-21c-.8 0-1.5-.7-1.5-1.5V28.6h-2c-.8 0-1.1-.9-.5-1.4Z"/></g><g class="lm-bg"><rect x="23.7" y="35.5" width="4.2" height="6" rx=".8"/><rect x="29.9" y="31.5" width="4.2" height="10" rx=".8"/><rect x="36.1" y="27.5" width="4.2" height="14" rx=".8"/></g></svg>Patrimony</h1>
     <div style="display:flex">
@@ -602,7 +612,7 @@ function setLock(m, msg){
   mode = m; entry = ''; drawDots();
   $('lockTitle').textContent = {unlock:'Patrimony', setup:'Choisis un code', confirm:'Confirme le code'}[m];
   $('lockMsg').textContent = msg || (m === 'setup' ? '6 chiffres. Il chiffre tes données : sans lui, elles sont perdues.' : '');
-  $('lock').classList.remove('hidden'); $('app').classList.add('hidden');
+  $('lock').classList.remove('hidden'); $('app').classList.add('hidden'); document.documentElement.classList.add('locked');
 }
 function drawDots(){ [...$('dots').children].forEach((d, i) => d.classList.toggle('on', i < entry.length)); }
 function fail(msg){ $('dots').classList.remove('err'); void $('dots').offsetWidth; $('dots').classList.add('err'); $('lockMsg').textContent = msg; entry = ''; drawDots(); }
@@ -648,7 +658,7 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function unlocked(){
-  $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); applyUi();
+  $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); document.documentElement.classList.remove('locked'); applyUi();
   render();
   if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 60000) refresh(true, true);
   setTimeout(() => fetchHistory(false), 1500);
@@ -692,6 +702,12 @@ const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractio
 const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
 
 /* ---------- Rendu ---------- */
+function sizeBand(){
+  const b = $('topband'), card = document.querySelector('.card.ov'); if (!b || !card) return;
+  const top = $('app').getBoundingClientRect().top;
+  b.style.height = `calc(env(safe-area-inset-top) + ${Math.round(card.getBoundingClientRect().top - top + 34)}px)`;
+}
+addEventListener('resize', () => requestAnimationFrame(sizeBand));
 function render(){
   if (!S) return;
   const t = totals();
@@ -706,6 +722,7 @@ function render(){
   } else { dl.className = 'delta'; dl.textContent = ''; }
   $('priceStatus').textContent = (S.pricesAt ? 'Prix du ' + when(S.pricesAt) : 'Prix jamais actualisés') + (t.missing ? ' · ' + t.missing + ' actif(s) sans prix ni taux' : '');
   drawChart(); drawDonut(t); drawList();
+  requestAnimationFrame(sizeBand);
 }
 
 function icon(a){
@@ -1518,7 +1535,7 @@ const THEME = 'patrimoine.theme';
 function applyTheme(t){
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]').content = dark ? '#07131f' : '#f5f7fa';
+  document.querySelector('meta[name=theme-color]').content = dark ? '#07131f' : '#0f2a44';
   [...$('sTheme').children].forEach(b => b.classList.toggle('on', b.dataset.t === t));
 }
 let theme = 'auto';
