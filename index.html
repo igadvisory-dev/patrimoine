@@ -345,7 +345,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.3 · 24/11/2026</div>
+  <div class="ver">Version 7.4 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -719,8 +719,15 @@ function sizeBand(){
   b.style.height = `calc(env(safe-area-inset-top) + ${Math.round(card.getBoundingClientRect().top - top + 34)}px)`;
 }
 addEventListener('resize', () => requestAnimationFrame(sizeBand));
+const CUR_COLOR = {EUR:'#2B56C9', USD:'#2E7D4F', GBP:'#2A3F8F', CHF:'#DA291C', CAD:'#D52B1E', AED:'#00732F', JPY:'#BC002D', CNY:'#DE2910', AUD:'#00843D', SEK:'#006AA7', NOK:'#BA0C2F', DKK:'#C60C30', PLN:'#DC143C', SAR:'#006C35', INR:'#FF9933', KRW:'#2B5BA8', TRY:'#E30A17', ILS:'#2A5BD8', THB:'#4A4580', BRL:'#009C3B', ZAR:'#007749', HKD:'#DE2910', SGD:'#EF3340', NZD:'#2A4FA0', MXN:'#006847'};
+function syncCatColors(){
+  // Les couleurs suivent les logos : Bitcoin orange, maison cuivrée, devise de référence pour le cash.
+  CATS.crypto.hex = '#F7931A'; CATS.immo.hex = '#B47655'; CATS.compte.hex = CUR_COLOR[S.base] || '#6aa99b'; CATS.societe.hex = '#a9b4c2';
+  for (const c in CATS) CATS[c].color = CATS[c].hex;
+}
 function render(){
   if (!S) return;
+  syncCatColors();
   const t = totals();
   $('total').textContent = money(t.total);
   const hist = series(0);
