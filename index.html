@@ -318,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.2 · 24/11/2026</div>
+  <div class="ver">Version 6.3 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -393,6 +393,7 @@ html,body{overscroll-behavior-y:none}
       <div><label for="fQty">Quantité</label><input id="fQty" inputmode="decimal" placeholder="0,5"></div>
       <div><label for="fPrice">Prix unitaire</label><input id="fPrice" inputmode="decimal" placeholder="Auto"></div>
     </div>
+    <div class="hint hidden" id="qtyHist"></div>
 
     <div id="valueFields">
       <div class="two">
@@ -957,7 +958,7 @@ function fxAt(cur, d){
   return rate(cur);
 }
 function valueAt(a, d){
-  if (a.cat === 'crypto'){ const p = priceAt(a, d); return p == null ? 0 : (num(a.qty) || 0) * p; }
+  if (a.cat === 'crypto'){ const p = priceAt(a, d); if (p == null) return 0; const q = a.qtyHist?.length ? num(lastAtOrBefore(a.qtyHist, d)) : num(a.qty); return (q || 0) * p; }
   const r = fxAt(a.cur, d); if (!r) return 0;
   const share = a.cat === 'compte' ? 100 : (num(a.share) ?? 100);
   const debt = a.cat === 'immo' ? (num(a.debt) || 0) : 0;
@@ -1285,6 +1286,9 @@ $('coinResults').addEventListener('click', e => {
   $('coinList').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
 });
 function openAsset(a){
+  { const h = a?.cat === 'crypto' && a.qtyHist?.length > 1 ? a.qtyHist : null;
+    $('qtyHist').classList.toggle('hidden', !h);
+    if (h) $('qtyHist').innerHTML = 'Historique : ' + h.slice(-4).map(([d, q]) => `${qty(num(q) || 0)} depuis le ${new Date(d + 'T12:00:00').toLocaleDateString('fr-FR')}`).join(' → '); }
   $('fAdded').value = a ? (a.added || '') : today(); $('fAdded').max = today();
   $('assetMeta').textContent = a ? (a.updated ? 'Modifié le ' + updatedTxt(a) : 'Ajouté ' + addedTxt(a).toLowerCase()) : '';
   coinSearch = false; $('instList').classList.add('hidden'); $('coinList').classList.add('hidden');
@@ -1314,6 +1318,7 @@ $('list').addEventListener('click', e => {
 $('assetForm').addEventListener('submit', async e => {
   e.preventDefault();
   const a = editing || {id:uid()};
+  const oldQty = editing && editing.cat === 'crypto' ? editing.qty : null, oldAdded = editing?.added;
   a.cat = cat; a.name = (cat === 'crypto' && coin) ? coin.name : $('fName').value.trim();
   if (!a.name){ toast('Indique un nom'); return; } a.inst = instNew ? $('fInst').value.trim() : instVal; a.note = $('fNote').value.trim();
   if (cat === 'crypto'){
@@ -1331,6 +1336,15 @@ $('assetForm').addEventListener('submit', async e => {
     delete a.qty; delete a.price; delete a.coinId; delete a.symbol; delete a.coinName;
   }
   { const d = $('fAdded').value; if (d) a.added = d; else if (!editing) a.added = today(); }
+  if (a.cat === 'crypto'){
+    // Historique des quantités : la nouvelle quantité s'applique à partir d'aujourd'hui.
+    let h = (a.qtyHist && a.qtyHist.length) ? a.qtyHist.map(x => x.slice()) : (oldQty != null ? [[oldAdded || a.added || LEGACY, oldQty]] : []);
+    if (!h.length) h = [[a.added || today(), a.qty]];
+    if (a.added) h[0][0] = a.added < h[0][0] || h.length === 1 ? a.added : h[0][0];
+    const last = h[h.length - 1];
+    if (num(last[1]) !== num(a.qty)){ if (last[0] >= today()) last[1] = a.qty; else h.push([today(), a.qty]); }
+    a.qtyHist = h.sort((x, y) => x[0] < y[0] ? -1 : 1);
+  } else delete a.qtyHist;
   a.updated = new Date().toISOString();
   if (!editing) S.assets.push(a);
   setTimeout(() => fetchHistory(false), 300);
