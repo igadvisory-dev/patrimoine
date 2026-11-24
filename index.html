@@ -368,7 +368,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.6 · 24/11/2026</div>
+  <div class="ver">Version 7.7 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -482,7 +482,7 @@ html,body{overscroll-behavior-y:none}
   <div class="setrow hidden" id="bioRow"><span>Déverrouillage par Face ID</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnBioSet" type="button">Activer</button></div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
   <div class="setrow"><span>Tout effacer</span><button class="btn danger" style="width:auto;margin:0;padding:10px 0" id="btnWipe">Effacer</button></div>
-  <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
+  <div class="hint">Tes données restent sur ce téléphone, chiffrées avec ton code. Seuls les prix des cryptos (CoinGecko, CryptoCompare ou Binance) et les taux de change (ExchangeRate-API, ou BCE via Frankfurter en secours) sont récupérés sur internet.</div>
 </div></div>
 
 <!-- Autres informations d'un bien -->
@@ -1067,7 +1067,16 @@ async function fetchHistory(force){
       const h = S.priceHist[id];
       if (!force && h && h.base === S.base && Date.now() - h.t < 6 * 3600e3 && (h.pts[0]?.[0] || '9') <= minAdded) continue;
       let data = null;
-      for (const days of ['max', '365']){
+      // CryptoCompare d'abord (jusqu'à 2000 jours d'historique), CoinGecko en secours.
+      const sym = (S.assets.find(a => a.coinId === id && a.symbol) || {}).symbol?.toUpperCase();
+      if (sym){
+        try {
+          const d = await getJSON(`https://min-api.cryptocompare.com/data/v2/histoday?fsym=${encodeURIComponent(sym)}&tsym=${S.base}&limit=2000`);
+          const rows = (d?.Data?.Data || []).filter(r => r.close > 0);
+          if (d?.Response !== 'Error' && rows.length) data = {prices: rows.map(r => [r.time * 1000, r.close])};
+        } catch(e){}
+      }
+      if (!data) for (const days of ['max', '365']){
         try { data = await getJSON(`https://api.coingecko.com/api/v3/coins/${encodeURIComponent(id)}/market_chart?vs_currency=${bc}&days=${days}&interval=daily`); if (data?.prices?.length) break; } catch(e){ data = null; }
       }
       if (!S) return;
@@ -1197,6 +1206,44 @@ $('ranges').addEventListener('click', e => {
 });
 
 /* ---------- Prix et taux ---------- */
+// Prix des cryptos : CoinGecko, puis CryptoCompare, puis Binance en secours (sans clé, utilisables depuis l'app).
+let cgPause = 0;
+async function fetchCryptoPrices(ids){
+  const bc = S.base.toLowerCase(), BC = S.base;
+  const done = new Set();
+  if (Date.now() > cgPause){
+    try {
+      const data = await getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=' + bc + '&per_page=250&ids=' + encodeURIComponent(ids.join(',')));
+      if (!S) return false;
+      for (const c of data){ if (c.current_price == null) continue; S.prices[c.id] = Object.assign(S.prices[c.id] || {}, {[bc]: c.current_price}); if (c.image) S.logos[c.id] = c.image; done.add(c.id); }
+    } catch(e){ cgPause = Date.now() + 5 * 60000; }
+  }
+  let rest = ids.filter(id => !done.has(id));
+  if (!rest.length) return true;
+  const symOf = id => (S.assets.find(a => a.coinId === id && a.symbol) || {}).symbol?.toUpperCase();
+  const syms = [...new Set(rest.map(symOf).filter(Boolean))];
+  if (syms.length){
+    try {
+      const d = await getJSON('https://min-api.cryptocompare.com/data/pricemulti?fsyms=' + syms.join(',') + '&tsyms=' + BC);
+      if (d && d.Response !== 'Error') for (const id of rest){ const p = d[symOf(id)]?.[BC]; if (p != null){ S.prices[id] = Object.assign(S.prices[id] || {}, {[bc]: p}); done.add(id); } }
+    } catch(e){}
+  }
+  rest = ids.filter(id => !done.has(id));
+  if (rest.length){
+    try {
+      const all = await getJSON('https://api.binance.com/api/v3/ticker/price');
+      const px = Object.fromEntries(all.map(t => [t.symbol, +t.price]));
+      const usd = rate('USD');
+      for (const id of rest){
+        const sy = symOf(id); if (!sy) continue;
+        let p = px[sy + BC];
+        if (p == null && px[sy + 'USDT'] != null){ const bu = px[BC + 'USDT']; if (bu) p = px[sy + 'USDT'] / bu; else if (usd) p = px[sy + 'USDT'] / usd; }
+        if (p != null){ S.prices[id] = Object.assign(S.prices[id] || {}, {[bc]: p}); done.add(id); }
+      }
+    } catch(e){}
+  }
+  return done.size > 0;
+}
 async function getJSON(url){ const r = await fetch(url, {cache:'no-store'}); if (!r.ok) throw new Error(r.status); return r.json(); }
 let refreshing = null;
 function refresh(quiet, auto){
@@ -1211,12 +1258,7 @@ async function doRefresh(quiet, auto){
   let okP = true, okF = true;
   const ids = [...new Set(S.assets.filter(a => a.cat === 'crypto' && a.coinId).map(a => a.coinId))];
   if (ids.length){
-    try {
-      const bc = S.base.toLowerCase();
-      const data = await getJSON('https://api.coingecko.com/api/v3/coins/markets?vs_currency=' + bc + '&per_page=250&ids=' + encodeURIComponent(ids.join(',')));
-      if (!S) return;
-      for (const c of data){ S.prices[c.id] = Object.assign(S.prices[c.id] || {}, {[bc]: c.current_price}); if (c.image) S.logos[c.id] = c.image; }
-    } catch(e){ okP = false; }
+    okP = await fetchCryptoPrices(ids);
   }
   if (!S) return;
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()).concat(BASES))].filter(c => c !== S.base);
