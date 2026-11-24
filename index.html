@@ -235,6 +235,7 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .pwf .pwok.ko{background:color-mix(in srgb,var(--down) 18%,transparent);color:var(--down)}
 .pwf input.ko{border-color:color-mix(in srgb,var(--down) 55%,transparent)}
 .pwf input.ok{border-color:color-mix(in srgb,var(--up) 55%,transparent)}
+.cpk .cpkq{position:sticky;top:-4px;z-index:1;width:100%;margin:0 0 4px;box-shadow:0 -4px 0 var(--panel)}
 .pksearch{min-height:40px!important;margin:2px 0 4px;font-size:16px}
 .pkhead{font-size:12px;color:var(--mute);padding:6px 8px 2px;letter-spacing:.03em}
 .ico.mini.clogo{background:#fff;border-radius:50%}
@@ -399,7 +400,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.1 · 24/11/2026</div>
+  <div class="ver">Version 9.2 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1591,9 +1592,22 @@ function curPicker(sel, small){
   btn.addEventListener('click', () => {
     document.querySelectorAll('.picklist').forEach(l => l !== list && l.classList.add('hidden'));
     if (list.classList.toggle('hidden')) return;
-    list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${bd(o.value)}<span class="pv">${esc(o.value)}</span><span class="pn">${esc(CUR_NAME[o.value] || '')}</span></button>`).join('');
-    const on = list.querySelector('.on'); if (on) list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2;
+    q.value = ''; fill(); list.prepend(q);
+    const on = list.querySelector('.on'); if (on) list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2 - 24;
+    if (!matchMedia('(pointer:coarse)').matches) q.focus({preventScroll:true});
   });
+  // Recherche par code ou par nom, sans tenir compte des accents ni de la casse.
+  const norm = t => (t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const q = document.createElement('input'); q.className = 'pksearch cpkq'; q.placeholder = 'Rechercher (dollar, AED…)'; q.inputMode = 'search'; q.autocomplete = 'off'; q.setAttribute('autocorrect', 'off'); q.setAttribute('autocapitalize', 'off');
+  const opts = document.createElement('div');
+  function fill(){
+    const t = norm(q.value.trim());
+    const items = [...sel.options].filter(o => !t || norm(o.value).includes(t) || norm(CUR_NAME[o.value]).includes(t));
+    opts.innerHTML = items.map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${bd(o.value)}<span class="pv">${esc(o.value)}</span><span class="pn">${esc(CUR_NAME[o.value] || '')}</span></button>`).join('') || '<div class="hint" style="padding:10px 8px">Aucune devise trouvée</div>';
+    if (!list.contains(opts)) list.append(opts);
+  }
+  q.addEventListener('input', () => { fill(); list.scrollTop = 0; });
+  q.addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); opts.querySelector('button[data-v]')?.click(); } });
   list.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; list.classList.add('hidden'); if (b.dataset.v !== sel.value){ sel.value = b.dataset.v; sel.dispatchEvent(new Event('change')); } });
   document.addEventListener('click', e => { if (!wrap.contains(e.target)) list.classList.add('hidden'); });
   draw();
