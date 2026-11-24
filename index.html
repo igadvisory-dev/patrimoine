@@ -342,7 +342,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.1 · 24/11/2026</div>
+  <div class="ver">Version 7.2 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -449,7 +449,7 @@ html,body{overscroll-behavior-y:none}
   <div class="setrow"><span>Apparence</span><div class="theme" id="sTheme"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Jour</button><button type="button" data-t="dark">Nuit</button></div></div>
   <div class="setrow"><span style="white-space:nowrap">Devise de référence</span><select id="sBase" style="width:104px;flex:none"></select></div>
   <div class="hidden"><div id="fxInfo"></div><div id="fxList"></div></div>
-  <div class="setrow"><div><div>Sauvegarde</div><div class="hint" style="margin-top:2px;max-width:170px">Fichier non chiffré : garde-le en lieu sûr</div></div><div class="bkbtns"><button class="btn sec" type="button" id="btnExport">Exporter</button><button class="btn sec" type="button" id="btnImport">Importer</button></div></div>
+  <div class="setrow"><div><div>Sauvegarde</div><div class="hint" style="margin-top:2px;max-width:170px">Fichier chiffré par mot de passe</div></div><div class="bkbtns"><button class="btn sec" type="button" id="btnExport">Exporter</button><button class="btn sec" type="button" id="btnImport">Importer</button></div></div>
   <input type="file" id="fileImport" accept="application/json,.json" class="hidden">
   <div class="setrow hidden" id="bioRow"><span>Déverrouillage par Face ID</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnBioSet" type="button">Activer</button></div>
   <div class="setrow"><span>Code d'accès</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnPin">Changer</button></div>
@@ -469,6 +469,18 @@ html,body{overscroll-behavior-y:none}
   <a class="btn maplink" id="mapApple" target="_blank" rel="noopener">Ouvrir dans Plans</a>
   <a class="btn sec maplink" id="mapGoogle" target="_blank" rel="noopener" style="margin-top:8px">Ouvrir dans Google Maps</a>
   <button class="btn sec" type="button" data-close style="margin-top:8px;background:none;border:0">Annuler</button>
+</div></div>
+
+<!-- Sauvegarde chiffrée -->
+<div class="sheet hidden" id="bkSheet"><div class="fsheet">
+  <header><h2 id="bkTitle">Sauvegarde chiffrée</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
+  <p class="hint" id="bkMsg" style="font-size:14px;margin:4px 0 0"></p>
+  <div id="bkForm">
+    <label for="bkPw">Mot de passe</label><input id="bkPw" type="password" autocomplete="new-password">
+    <div id="bkPw2Wrap"><label for="bkPw2">Confirmer</label><input id="bkPw2" type="password" autocomplete="new-password"></div>
+  </div>
+  <button class="btn" type="button" id="bkGo">Chiffrer</button>
+  <button class="btn hidden" type="button" id="bkShare">Enregistrer le fichier</button>
 </div></div>
 
 <!-- Dialogue de confirmation -->
@@ -1419,24 +1431,66 @@ $('sBase').addEventListener('change', async e => {
   S.fx.manual = {};
   await commit(); drawFx(); refresh(true); fetchHistory(true);
 });
-$('btnExport').addEventListener('click', async () => {
-  const blob = new Blob([JSON.stringify(S, null, 1)], {type:'application/json'});
-  const name = 'patrimony-' + today() + '.json';
-  const file = new File([blob], name, {type:'application/json'});
-  try {
-    if (navigator.canShare && navigator.canShare({files:[file]})){ await navigator.share({files:[file], title:name}); return; }
-  } catch(e){ if (e.name === 'AbortError') return; }
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name; document.body.append(a); a.click(); a.remove();
+/* Sauvegarde chiffrée : AES-GCM 256, clé dérivée du mot de passe (PBKDF2-SHA256). */
+const BK_ITER = 310000;
+async function bkKey(pw, salt){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+  return crypto.subtle.deriveKey({name:'PBKDF2', salt, iterations:BK_ITER, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['encrypt', 'decrypt']);
+}
+let bkMode = 'export', bkFile = null, bkResolve = null;
+function openBk(mode){
+  bkMode = mode; bkFile = null;
+  $('bkTitle').textContent = mode === 'export' ? 'Sauvegarde chiffrée' : 'Sauvegarde protégée';
+  $('bkMsg').textContent = mode === 'export' ? 'Choisis un mot de passe (8 caractères minimum). Il sera demandé pour restaurer : sans lui, le fichier est illisible.' : 'Saisis le mot de passe de cette sauvegarde.';
+  $('bkPw').value = ''; $('bkPw2').value = ''; $('bkPw2Wrap').classList.toggle('hidden', mode !== 'export');
+  $('bkGo').textContent = mode === 'export' ? 'Chiffrer' : 'Déverrouiller'; $('bkGo').classList.remove('hidden'); $('bkShare').classList.add('hidden'); $('bkForm').classList.remove('hidden');
+  show('bkSheet'); setTimeout(() => $('bkPw').focus(), 350);
+}
+$('btnExport').addEventListener('click', () => openBk('export'));
+$('bkGo').addEventListener('click', async () => {
+  const pw = $('bkPw').value;
+  if (bkMode === 'export'){
+    if (pw.length < 8){ toast('8 caractères minimum'); return; }
+    if (pw !== $('bkPw2').value){ toast('Les mots de passe ne correspondent pas'); return; }
+    $('bkGo').textContent = 'Chiffrement…';
+    const salt = crypto.getRandomValues(new Uint8Array(16)), iv = crypto.getRandomValues(new Uint8Array(12));
+    const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, await bkKey(pw, salt), new TextEncoder().encode(JSON.stringify(S)));
+    const out = JSON.stringify({patrimony:'backup', v:1, enc:'AES-GCM-256', kdf:'PBKDF2-SHA256', iter:BK_ITER, salt:b64(salt), iv:b64(iv), ct:b64(ct)});
+    const name = 'patrimony-' + today() + '.patrimony.json';
+    bkFile = new File([out], name, {type:'application/json'});
+    $('bkForm').classList.add('hidden'); $('bkGo').classList.add('hidden'); $('bkShare').classList.remove('hidden');
+    $('bkMsg').textContent = 'Fichier chiffré prêt. Enregistre-le, par exemple dans iCloud Drive.';
+  } else {
+    if (bkResolve) bkResolve(pw);
+  }
 });
+$('bkShare').addEventListener('click', async () => {
+  if (!bkFile) return;
+  try { if (navigator.canShare && navigator.canShare({files:[bkFile]})){ await navigator.share({files:[bkFile], title:bkFile.name}); hideSheet('bkSheet'); return; } }
+  catch(e){ if (e.name === 'AbortError') return; }
+  const a = document.createElement('a'); a.href = URL.createObjectURL(bkFile); a.download = bkFile.name; document.body.append(a); a.click(); a.remove(); hideSheet('bkSheet');
+});
+const askBkPassword = () => new Promise(res => { bkResolve = res; openBk('import'); });
 $('btnImport').addEventListener('click', () => $('fileImport').click());
 $('fileImport').addEventListener('change', async e => {
   const f = e.target.files[0]; e.target.value = ''; if (!f) return;
-  try {
-    const data = JSON.parse(await f.text());
-    if (!Array.isArray(data.assets)) throw 0;
-    if (!await ask('Remplacer tes données actuelles par cette sauvegarde (' + data.assets.length + ' actifs) ?')) return;
-    S = migrate(data); closeAll(); await commit(); toast('Sauvegarde restaurée');
-  } catch(err){ toast('Fichier de sauvegarde invalide'); }
+  let data;
+  try { data = JSON.parse(await f.text()); } catch(err){ toast('Fichier de sauvegarde invalide'); return; }
+  if (data && data.patrimony === 'backup' && data.ct){
+    for (;;){
+      const pw = await askBkPassword();
+      try {
+        const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(data.iv)}, await (async () => {
+          const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pw), 'PBKDF2', false, ['deriveKey']);
+          return crypto.subtle.deriveKey({name:'PBKDF2', salt:unb64(data.salt), iterations:data.iter || BK_ITER, hash:'SHA-256'}, base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+        })(), unb64(data.ct));
+        data = JSON.parse(new TextDecoder().decode(pt)); hideSheet('bkSheet', true); bkResolve = null; break;
+      } catch(err){ toast('Mot de passe incorrect'); $('bkPw').value = ''; $('bkPw').focus(); }
+    }
+  }
+  if (!data || !Array.isArray(data.assets)){ toast('Fichier de sauvegarde invalide'); return; }
+  if (!await ask('Remplacer tes données actuelles par cette sauvegarde (' + data.assets.length + ' actifs) ?')) return;
+  S = migrate(data); closeAll(); await commit(); toast('Sauvegarde restaurée');
 });
 $('btnPin').addEventListener('click', () => { closeAll(); $('app').classList.add('hidden'); afterPin = () => toast('Code modifié'); setLock('setup', 'Nouveau code à 6 chiffres'); });
 $('btnWipe').addEventListener('click', async () => {
