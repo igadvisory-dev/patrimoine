@@ -225,6 +225,17 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .actions .btn{margin-top:0}
 .actions .btn[type=submit]{flex:1}
 .actions .btn.danger{width:auto;padding:14px 16px;border:1px solid color-mix(in srgb,var(--down) 35%,transparent);background:none}
+.thead{font-size:13px;color:var(--mute);letter-spacing:.03em;margin:18px 0 6px}
+.tl{position:relative;padding-left:4px;max-height:38vh;overflow:auto}
+.tle{position:relative;display:flex;align-items:center;gap:12px;padding:8px 0 8px 18px}
+.tle::before{content:"";position:absolute;left:4px;top:0;bottom:0;width:2px;background:var(--line)}
+.tle:first-child::before{top:50%}.tle:last-child::before{bottom:50%}.tle:only-child::before{display:none}
+.tdot{position:absolute;left:0;top:50%;width:10px;height:10px;margin-top:-5px;border-radius:50%;background:var(--panel);border:2px solid var(--mute)}
+.tdot.now{background:var(--gold);border-color:var(--gold)}
+.tmain{flex:1;display:flex;flex-direction:column}
+.tmain b{font-weight:600}.tmain small{color:var(--mute);font-size:12.5px}
+.tchg{font-size:13px;font-weight:600}.tchg.up{color:var(--up)}.tchg.down{color:var(--down)}
+#infoSheet .btn{margin-top:16px}
 .minih{display:flex;align-items:center;gap:0;padding:12px 0 4px;font-size:12.5px;color:var(--mute);font-weight:500;letter-spacing:.02em;border-top:1px solid var(--line)}
 .minih span{flex:1}.minih b{color:var(--ink);font-weight:600}
 .drill2-in>.minih+.row.sub{border-top:0}
@@ -318,7 +329,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.4 · 24/11/2026</div>
+  <div class="ver">Version 6.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1319,7 +1330,7 @@ $('list').addEventListener('click', e => {
   const v = e.target.closest('.vseg button');
   if (v){ if (viewMode() !== v.dataset.view){ S.view = v.dataset.view; drawList(); save().catch(() => {}); } return; }
   if (e.target.closest('.row[data-multi]')){ S.view = 'inst'; drawList(); save().catch(() => {}); toast('Détail par wallet'); return; }
-  const r = e.target.closest('.row[data-id]'); if (r) openAsset(S.assets.find(a => a.id === r.dataset.id));
+  const r = e.target.closest('.row[data-id]'); if (r){ const a = S.assets.find(x => x.id === r.dataset.id); if (a && (a.cat === 'crypto' || a.cat === 'compte')) return openInfo(a.id); openAsset(a); }
 });
 $('assetForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1462,6 +1473,20 @@ const LEGACY = '2026-11-24';
 const fmtDay = d => new Date(d + 'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric', month:'long', year:'numeric'});
 const addedTxt = a => a.added ? fmtDay(a.added) : 'Avant le ' + fmtDay(LEGACY);
 const updatedTxt = a => a.updated ? new Date(a.updated).toLocaleString('fr-FR', {day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit'}) : 'Inconnue';
+function histHtml(a){
+  const cur = (a.cur || S.base).toUpperCase(), sym = (a.symbol || '').toUpperCase();
+  let rows;
+  if (a.cat === 'crypto') rows = (a.qtyHist?.length ? a.qtyHist : [[a.added || '', a.qty]]).map(([d, q]) => [d, num(q) || 0]);
+  else rows = (a.valHist?.length ? a.valHist : [[a.added || '', a.value, a.debt, a.share]]).map(([d, v, db]) => [d, (num(v) || 0) - (a.cat === 'immo' ? (num(db) || 0) : 0)]);
+  const fmt = x => a.cat === 'crypto' ? qty(x) + (sym ? ' ' + esc(sym) : '') : money(x, cur);
+  const fmtD = x => (x >= 0 ? '+' : '−') + (a.cat === 'crypto' ? qty(Math.abs(x)) + (sym ? ' ' + esc(sym) : '') : money(Math.abs(x), cur));
+  const title = a.cat === 'crypto' ? 'Historique des quantités' : a.cat === 'compte' ? 'Historique du solde' : 'Historique de la valeur nette';
+  const items = rows.map(([d, v], i) => {
+    const diff = i ? v - rows[i - 1][1] : null;
+    return `<div class="tle"><span class="tdot${i === rows.length - 1 ? ' now' : ''}"></span><div class="tmain"><b class="num">${fmt(v)}</b><small>${d ? (i ? 'Le ' : 'Depuis le ') + fmtDay(d) : 'Avant le ' + fmtDay(LEGACY)}${i ? '' : ' · ajout'}</small></div>${diff == null ? '' : `<span class="tchg num ${diff >= 0 ? 'up' : 'down'}">${fmtD(diff)}</span>`}</div>`;
+  }).reverse().join('');
+  return `<div class="thead">${title}</div><div class="tl">${items}</div>`;
+}
 function openInfo(id){
   const a = S.assets.find(x => x.id === id); if (!a) return;
   $('infoTitle').textContent = a.name;
@@ -1469,10 +1494,12 @@ function openInfo(id){
   const instLbl = {crypto:'Wallet', compte:'Banque', immo:'Mode de détention', societe:'Mode de détention'}[a.cat];
   $('infoBody').innerHTML = (a.inst ? kv(instLbl, esc(a.inst)) : '') +
     (a.note ? (a.cat === 'immo' ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : kv('Note', esc(a.note))) : '') +
-    kv('Ajouté le', addedTxt(a)) + kv('Dernière modification', updatedTxt(a));
+    kv('Ajouté le', addedTxt(a)) + kv('Dernière modification', updatedTxt(a)) +
+    histHtml(a) +
+    `<button class="btn" type="button" data-edit="${a.id}">Modifier</button>`;
   show('infoSheet');
 }
-$('infoSheet').addEventListener('click', e => { const ad = e.target.closest('.addr'); if (ad) openMaps(ad.dataset.addr); });
+$('infoSheet').addEventListener('click', e => { const ad = e.target.closest('.addr'); if (ad) return openMaps(ad.dataset.addr); const ed = e.target.closest('[data-edit]'); if (ed){ hideSheet('infoSheet'); openAsset(S.assets.find(a => a.id === ed.dataset.edit)); } });
 function openMaps(addr){
   const q = encodeURIComponent(addr);
   $('mapAddr').textContent = addr;
