@@ -340,7 +340,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.9 · 24/11/2026</div>
+  <div class="ver">Version 7.0 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -445,14 +445,10 @@ html,body{overscroll-behavior-y:none}
 <div class="sheet hidden" id="setSheet"><div>
   <header><h2>Réglages</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
   <div class="setrow"><span>Apparence</span><div class="theme" id="sTheme"><button type="button" data-t="auto">Auto</button><button type="button" data-t="light">Jour</button><button type="button" data-t="dark">Nuit</button></div></div>
-  <div class="setrow"><span>Devise de référence</span><select id="sBase" style="width:auto;max-width:62%"></select></div>
-  <div class="setrow" style="display:block">
-    <div>Taux de change</div>
-    <div class="hint" id="fxInfo"></div>
-    <div id="fxList"></div>
-  </div>
+  <div class="setrow"><span style="white-space:nowrap">Devise de référence</span><select id="sBase" style="width:104px;flex:none"></select></div>
+  <div class="hidden"><div id="fxInfo"></div><div id="fxList"></div></div>
   <div class="setrow"><span>Sauvegarde</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnExport">Exporter</button></div>
-  <div class="setrow"><span>Restaurer une sauvegarde</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnImport">Importer</button></div>
+  <div class="setrow"><span>Restauration</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnImport">Importer</button></div>
   <input type="file" id="fileImport" accept="application/json,.json" class="hidden">
   <div class="hint">Le fichier exporté n'est pas chiffré : garde-le dans un endroit sûr (iCloud Drive, par exemple).</div>
   <div class="setrow hidden" id="bioRow"><span>Déverrouillage par Face ID</span><button class="btn sec" style="width:auto;margin:0;padding:10px 14px" id="btnBioSet" type="button">Activer</button></div>
@@ -1407,7 +1403,7 @@ $('btnDelete').addEventListener('click', async () => {
 });
 
 /* ---------- Réglages ---------- */
-$('sBase').innerHTML = BASES.map(c => `<option value="${c}">${c} · ${CUR_NAME[c]}</option>`).join('');
+$('sBase').innerHTML = BASES.map(c => `<option value="${c}">${c}</option>`).join('');
 $('fCur').innerHTML = CURRENCIES.map(([c, n]) => `<option value="${c}">${c} · ${n}</option>`).join('');
 function drawFx(){
   const curs = [...new Set(S.assets.filter(a => a.cat !== 'crypto').map(a => (a.cur || S.base).toUpperCase()))].filter(c => c !== S.base);
