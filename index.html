@@ -57,6 +57,15 @@ html.locked,html.locked body{background:var(--lk-bg)}
 .dots i{width:12px;height:12px;border-radius:50%;border:1px solid var(--lk-dot);transition:background .15s}
 .dots i.on{background:var(--lk-on);border-color:var(--lk-on)}
 .dots.err{animation:shake .35s}
+/* Verrouillage manuel : l'app s'efface en douceur, l'écran du code apparaît en cascade. */
+#app.lk-out{transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .45s ease,filter .45s ease;transform:scale(.94);opacity:0;filter:blur(8px);pointer-events:none}
+#lock.lk-in{animation:lkFade .45s ease both}
+#lock.lk-in>*{animation:lkUp .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0) * 55ms + 120ms)}
+@keyframes lkFade{from{opacity:0}}
+@keyframes lkUp{from{opacity:0;transform:translateY(18px) scale(.97)}}
+#btnLock svg path{transition:transform .22s cubic-bezier(.3,1.4,.5,1)}
+#btnLock.closing svg path{transform:translateY(2.5px)}
+@media(prefers-reduced-motion:reduce){#app.lk-out{transition:opacity .2s;transform:none;filter:none}#lock.lk-in>*{animation:none}}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pad{display:grid;grid-template-columns:repeat(3,78px);gap:18px;margin-top:8px}
 .pad button{position:relative;overflow:hidden;height:78px;border-radius:50%;background:var(--lk-key);border:1px solid var(--lk-keyb);color:var(--lk-ink);font:300 30px var(--sans);transition:transform .18s cubic-bezier(.2,.8,.2,1),background .25s;-webkit-user-select:none;user-select:none}
@@ -400,7 +409,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.2 · 24/11/2026</div>
+  <div class="ver">Version 9.3 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -726,6 +735,23 @@ $('pad').addEventListener('click', e => {
   if (entry.length === 6) setTimeout(pinDone, 120);
 });
 function lock(){ key = null; S = null; curPin = ''; closeAll(true); setLock('unlock'); $('btnBio').classList.toggle('off', !bioOK || !bioCfg()); }
+function lockSmooth(){
+  const app = $('app'), lk = $('lock'), btn = $('btnLock');
+  if (lk.classList.contains('lk-in')) return;
+  btn.classList.add('closing');
+  setTimeout(() => {
+    closeAll(true); app.classList.add('lk-out');
+    key = null; S = null; curPin = '';
+    mode = 'unlock'; entry = ''; drawDots(); $('lockTitle').textContent = 'Patrimony'; $('lockMsg').textContent = '';
+    $('btnBio').classList.toggle('off', !bioOK || !bioCfg());
+    [...lk.children].forEach((c, i) => c.style.setProperty('--d', i));
+    lk.classList.add('lk-in'); lk.classList.remove('hidden');
+    setTimeout(() => {
+      setLock('unlock'); app.classList.remove('lk-out'); btn.classList.remove('closing');
+      setTimeout(() => lk.classList.remove('lk-in'), 500);
+    }, 460);
+  }, 160);
+}
 let hiddenAt = 0;
 document.addEventListener('visibilitychange', () => {
   if (document.hidden) hiddenAt = Date.now();
@@ -1708,7 +1734,7 @@ $('btnWipe').addEventListener('click', async () => {
   if (!await ask('Effacer définitivement toutes les données de ce téléphone ? Pense à exporter une sauvegarde avant.')) return;
   localStorage.removeItem(VAULT); disableBio(); S = null; key = null; closeAll(); setLock('setup');
 });
-$('btnLock').addEventListener('click', lock);
+$('btnLock').addEventListener('click', lockSmooth);
 function applyHide(){ document.documentElement.classList.toggle('masked', hideAmounts); $('btnHide').setAttribute('aria-pressed', hideAmounts); $('btnHide').setAttribute('aria-label', hideAmounts ? 'Afficher les montants' : 'Masquer les montants'); }
 $('btnHide').addEventListener('click', () => { hideAmounts = !hideAmounts; try { localStorage.setItem('patrimony.hide', hideAmounts ? '1' : '0'); } catch(e){} applyHide(); render(); if (!$('infoSheet').classList.contains('hidden') && openInfoId) openInfo(openInfoId); });
 applyHide();
