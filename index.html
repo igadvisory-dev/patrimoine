@@ -285,6 +285,12 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .sbtn.danger{color:var(--down);border-color:color-mix(in srgb,var(--down) 35%,transparent);background:none}
 select.sctl{flex:none;width:96px;min-height:40px;padding:0 26px 0 12px;border-radius:12px;font-size:14px;font-weight:600;background-color:var(--panel2);background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%}
 #setSheet .setrow{min-height:64px;padding:10px 0}
+/* Masquer/afficher les montants : flou puis réapparition, l'œil pivote. */
+html.amt-anim .num,html.amt-anim .amt{transition:filter .26s ease,opacity .26s ease,transform .26s ease}
+html.amt-swap .num,html.amt-swap .amt{filter:blur(7px);opacity:.25;transform:scale(.98)}
+#btnHide svg{transition:transform .26s cubic-bezier(.3,1.4,.5,1),opacity .2s ease}
+html.amt-swap #btnHide svg{transform:scale(.4) rotate(-20deg);opacity:0}
+@media(prefers-reduced-motion:reduce){html.amt-swap .num,html.amt-swap .amt{filter:none;transform:none}}
 #btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
 html.masked .sctip b{letter-spacing:.05em}
 .fab.fab2{right:calc(max(20px,env(safe-area-inset-right)) + 4px);width:50px;height:50px;bottom:calc(22px + env(safe-area-inset-bottom));background:var(--panel);color:var(--gold);border:1px solid var(--line)}
@@ -409,7 +415,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.3 · 24/11/2026</div>
+  <div class="ver">Version 9.4 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1736,7 +1742,17 @@ $('btnWipe').addEventListener('click', async () => {
 });
 $('btnLock').addEventListener('click', lockSmooth);
 function applyHide(){ document.documentElement.classList.toggle('masked', hideAmounts); $('btnHide').setAttribute('aria-pressed', hideAmounts); $('btnHide').setAttribute('aria-label', hideAmounts ? 'Afficher les montants' : 'Masquer les montants'); }
-$('btnHide').addEventListener('click', () => { hideAmounts = !hideAmounts; try { localStorage.setItem('patrimony.hide', hideAmounts ? '1' : '0'); } catch(e){} applyHide(); render(); if (!$('infoSheet').classList.contains('hidden') && openInfoId) openInfo(openInfoId); });
+let hideBusy = false;
+$('btnHide').addEventListener('click', () => {
+  if (hideBusy) return; hideBusy = true;
+  const h = document.documentElement; h.classList.add('amt-anim', 'amt-swap');
+  setTimeout(() => {
+    hideAmounts = !hideAmounts; try { localStorage.setItem('patrimony.hide', hideAmounts ? '1' : '0'); } catch(e){}
+    applyHide(); render(); if (!$('infoSheet').classList.contains('hidden') && openInfoId) openInfo(openInfoId);
+    void document.body.offsetWidth; // les nouveaux montants partent floutés…
+    requestAnimationFrame(() => { h.classList.remove('amt-swap'); setTimeout(() => { h.classList.remove('amt-anim'); hideBusy = false; }, 300); }); // …puis se révèlent
+  }, 240);
+});
 applyHide();
 $('btnBioSet').addEventListener('click', async () => { if (bioCfg()){ if (await ask('Désactiver le déverrouillage par Face ID ?')) disableBio(); } else enableBio(); });
 
