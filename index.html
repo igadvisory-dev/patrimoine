@@ -204,6 +204,11 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .picklist button{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:10px;min-height:44px;text-align:left;font-size:15px}
 .picklist button.on{background:var(--goldsoft);font-weight:600}
 .picklist button.add{color:var(--gold)}
+.pksearch{min-height:40px!important;margin:2px 0 4px;font-size:16px}
+.pkhead{font-size:12px;color:var(--mute);padding:6px 8px 2px;letter-spacing:.03em}
+.ico.mini.clogo{background:#fff;border-radius:50%}
+.ico.mini.clogo img{width:28px;height:28px;border-radius:50%}
+#coinList{max-height:320px}
 .fsheet .frow .chosen{margin:0}
 .fsheet .frow .results{margin-top:6px}
 .frow{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:10px;margin-top:10px}
@@ -313,7 +318,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.7 · 24/11/2026</div>
+  <div class="ver">Version 5.8 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -365,10 +370,11 @@ html,body{overscroll-behavior-y:none}
   <form id="assetForm" autocomplete="off">
     <div id="cryptoFields" class="frow">
       <label for="fCoinQ">Crypto</label>
-      <div>
-        <div class="chosen hidden" id="coinChosen"></div>
-        <input id="fCoinQ" placeholder="Rechercher (bitcoin, ETH…)" inputmode="search">
-        <div class="results hidden" id="coinResults"></div>
+      <div class="picker" id="coinPicker"><button type="button" class="pickbtn" id="coinBtn" aria-haspopup="listbox"></button>
+        <div class="picklist hidden" id="coinList" role="listbox">
+          <input id="fCoinQ" class="pksearch" placeholder="Rechercher (bitcoin, ETH…)" inputmode="search" autocomplete="off">
+          <div id="coinResults"></div>
+        </div>
       </div>
     </div>
 
@@ -1104,10 +1110,9 @@ function renderInst(){
   const add = {crypto:'Nouveau wallet…', compte:'Nouvelle banque…', immo:'Autre…', societe:'Autre…'}[cat];
   const ic = v => v ? instIcon(v, cat, false).replace('class="ico', 'class="ico mini') : '<span class="ico mini none">–</span>';
   const plus = '<span class="ico mini none">+</span>';
-  $('instBtn').innerHTML = (instNew ? plus + '<span class="pv">' + add + '</span>' : ic(instVal) + '<span class="pv">' + (instVal ? esc(instVal) : 'Aucun') + '</span>') +
+  $('instBtn').innerHTML = (instNew ? plus + '<span class="pv">' + add + '</span>' : ic(instVal) + (instVal ? '<span class="pv">' + esc(instVal) + '</span>' : '<span class="pv" style="color:var(--mute)">Choisir…</span>')) +
     '<svg class="dd" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
   $('instList').innerHTML = opts.map(v => `<button type="button" data-v="${esc(v)}" class="${!instNew && instVal === v ? 'on' : ''}">${ic(v)}<span class="pv">${esc(v)}</span></button>`).join('') +
-    `<button type="button" data-v="" class="${!instNew && !instVal ? 'on' : ''}">${ic('')}<span class="pv">Aucun</span></button>` +
     `<button type="button" data-new="1" class="add${instNew ? ' on' : ''}">${plus}<span class="pv">${add}</span></button>`;
   $('instNewRow').classList.toggle('hidden', !instNew);
 }
@@ -1138,42 +1143,55 @@ function setCat(c){
 }
 $('catSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setCat(b.dataset.c); });
 let coinSearch = false;
+const coinLogo = (l) => l ? `<span class="ico mini clogo"><img src="${esc(l)}" alt="" onerror="this.remove()"></span>` : '<span class="ico mini none">₿</span>';
+const coinItem = c => `<button type="button" data-id="${esc(c.id)}" data-n="${esc(c.name)}" data-s="${esc(c.symbol)}" data-l="${esc(c.logo || '')}" class="${coin && coin.id === c.id ? 'on' : ''}">${coinLogo(c.logo)}<span class="pv">${esc(c.name)}</span><small style="color:var(--mute)">${esc((c.symbol || '').toUpperCase())}</small></button>`;
+function myCoins(){
+  const m = {};
+  for (const a of S.assets) if (a.cat === 'crypto' && a.coinId && !m[a.coinId]) m[a.coinId] = {id:a.coinId, name:a.coinName || a.name, symbol:a.symbol || '', logo:S.logos[a.coinId] || ''};
+  return Object.values(m);
+}
+function defaultCoins(){
+  const mine = myCoins();
+  $('coinResults').innerHTML = mine.length ? '<div class="pkhead">Mes cryptos</div>' + mine.map(coinItem).join('') : '<div class="hint" style="padding:10px 8px">Tape le nom ou le symbole d’une crypto.</div>';
+}
 function showCoin(){
-  const picked = !!coin && !coinSearch;
-  $('coinChosen').classList.toggle('hidden', !picked);
-  $('fCoinQ').classList.toggle('hidden', picked);
-  if (picked) $('coinChosen').innerHTML = `<span style="display:flex;align-items:center;gap:8px;min-width:0">${coin.logo || S.logos[coin.id] ? `<img src="${esc(coin.logo || S.logos[coin.id])}" alt="">` : ''}<b>${esc(coin.name)}</b><span style="color:var(--mute)">${esc(coin.symbol.toUpperCase())}</span></span><button type="button" class="lnk" id="coinChange">Changer</button>`;
+  const l = coin ? (coin.logo || S.logos[coin.id] || '') : '';
+  $('coinBtn').innerHTML = (coin ? coinLogo(l) + `<span class="pv">${esc(coin.name)} <span style="color:var(--mute)">${esc((coin.symbol || '').toUpperCase())}</span></span>` : '<span class="ico mini none">₿</span><span class="pv" style="color:var(--mute)">Choisir une crypto</span>') + '<svg class="dd" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
   $('nameWrap').classList.toggle('hidden', cat === 'crypto' && !!coin);
 }
-$('coinChosen').addEventListener('click', e => { if (e.target.closest('#coinChange')){ coinSearch = true; showCoin(); $('fCoinQ').focus(); } });
+$('coinBtn').addEventListener('click', () => {
+  const open = $('coinList').classList.toggle('hidden') === false;
+  if (open){ $('fCoinQ').value = ''; defaultCoins(); setTimeout(() => $('fCoinQ').focus(), 50); }
+});
+document.addEventListener('click', e => { if (!e.target.closest('#coinPicker')) $('coinList').classList.add('hidden'); });
 $('fCoinQ').addEventListener('input', e => {
   clearTimeout(searchT);
   const q = e.target.value.trim(), box = $('coinResults');
-  if (q.length < 2){ box.classList.add('hidden'); return; }
+  if (q.length < 2){ defaultCoins(); return; }
+  box.innerHTML = '<div class="hint" style="padding:10px 8px">Recherche…</div>';
   searchT = setTimeout(async () => {
     try {
       const d = await getJSON('https://api.coingecko.com/api/v3/search?query=' + encodeURIComponent(q));
-      const list = (d.coins || []).slice(0, 6);
-      box.innerHTML = list.length ? list.map(c => `<button type="button" data-id="${esc(c.id)}" data-n="${esc(c.name)}" data-s="${esc(c.symbol)}" data-l="${esc(c.large || c.thumb || '')}"><span style="display:flex;align-items:center;gap:10px">${c.thumb ? `<img src="${esc(c.thumb)}" alt="">` : ''}${esc(c.name)}</span><small>${esc(c.symbol)}</small></button>`).join('')
-        : '<div class="hint" style="padding:12px">Aucun résultat. Tu peux saisir le prix à la main.</div>';
-    } catch(err){ box.innerHTML = '<div class="hint" style="padding:12px">Recherche impossible hors ligne. Saisis le prix à la main.</div>'; }
-    box.classList.remove('hidden');
+      const list = (d.coins || []).slice(0, 8);
+      box.innerHTML = list.length ? list.map(c => coinItem({id:c.id, name:c.name, symbol:c.symbol, logo:c.large || c.thumb || ''})).join('')
+        : '<div class="hint" style="padding:10px 8px">Aucun résultat. Tu peux saisir le prix à la main.</div>';
+    } catch(err){ box.innerHTML = '<div class="hint" style="padding:10px 8px">Recherche impossible hors ligne. Saisis le prix à la main.</div>'; }
   }, 350);
 });
 $('coinResults').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s, logo:b.dataset.l}; coinSearch = false;
+  coin = {id:b.dataset.id, name:b.dataset.n, symbol:b.dataset.s, logo:b.dataset.l};
   if (!$('fName').value) $('fName').value = coin.name;
-  $('coinResults').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
+  $('coinList').classList.add('hidden'); $('fCoinQ').value = ''; showCoin();
 });
 function openAsset(a){
-  coinSearch = false; $('instList').classList.add('hidden');
+  coinSearch = false; $('instList').classList.add('hidden'); $('coinList').classList.add('hidden');
   editing = a || null; coin = a?.coinId ? {id:a.coinId, name:a.coinName || a.name, symbol:a.symbol || ''} : null;
   $('assetTitle').textContent = a ? 'Modifier' : 'Nouvel actif';
   $('fName').value = a?.name || ''; $('fInst').value = ''; instNew = false; instVal = a?.inst || ''; $('fQty').value = a?.qty ?? ''; $('fPrice').value = a?.price ?? '';
   $('fValue').value = a?.value ?? '';
   { const cv = (a?.cur || S.base).toUpperCase(); if (![...$('fCur').options].some(o => o.value === cv)) $('fCur').insertAdjacentHTML('beforeend', `<option value="${esc(cv)}">${esc(cv)}</option>`); $('fCur').value = cv; } $('fShare').value = a?.share ?? ''; $('fDebt').value = a?.debt ?? ''; $('fNote').value = a?.note || '';
-  $('fCoinQ').value = ''; $('coinResults').classList.add('hidden'); showCoin();
+  $('fCoinQ').value = ''; showCoin();
   $('btnDelete').classList.toggle('hidden', !a);
   AMOUNT_IDS.forEach(id => { $(id).value = fmtAmount($(id).value); });
   setCat(a?.cat || cat); show('assetSheet');
