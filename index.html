@@ -254,7 +254,8 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .bkbtns .btn{width:auto;margin:0;padding:9px 12px;min-height:40px;font-size:14px}
 #btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
 html.masked .sctip b{letter-spacing:.05em}
-.fab.fab2{right:calc(max(20px,env(safe-area-inset-right)) + 70px);width:50px;height:50px;bottom:calc(26px + env(safe-area-inset-bottom));background:var(--panel);color:var(--gold);border:1px solid var(--line)}
+.fab.fab2{right:calc(max(20px,env(safe-area-inset-right)) + 4px);width:50px;height:50px;bottom:calc(22px + env(safe-area-inset-bottom));background:var(--panel);color:var(--gold);border:1px solid var(--line)}
+#btnAdd{bottom:calc(84px + env(safe-area-inset-bottom))}
 .fab.fab2 svg{width:22px;height:22px}
 .updsheet{height:92vh;display:flex;flex-direction:column;padding-bottom:0!important}
 #updBody{flex:1;overflow:auto;margin:0 -20px;padding:0 20px 12px;-webkit-overflow-scrolling:touch}
@@ -368,7 +369,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.7 · 24/11/2026</div>
+  <div class="ver">Version 7.8 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -411,7 +412,7 @@ html,body{overscroll-behavior-y:none}
 
     <section class="card" id="list"></section>
   </main>
-  <button class="fab fab2" id="btnUpd" aria-label="Actualiser les montants"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h10M4 12h7M4 18h6"/><path d="m14.5 17.5 5.8-5.8a1.6 1.6 0 0 0-2.3-2.3l-5.8 5.8-.7 3z"/></svg></button>
+  <button class="fab fab2" id="btnUpd" aria-label="Actualiser les montants"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg></button>
   <button class="fab" id="btnAdd" aria-label="Ajouter un actif"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg></button>
 </div>
 
