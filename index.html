@@ -291,6 +291,8 @@ html.amt-swap .num,html.amt-swap .amt{filter:blur(7px);opacity:.25;transform:sca
 #btnHide svg{transition:transform .26s cubic-bezier(.3,1.4,.5,1),opacity .2s ease}
 html.amt-swap #btnHide svg{transform:scale(.4) rotate(-20deg);opacity:0}
 @media(prefers-reduced-motion:reduce){html.amt-swap .num,html.amt-swap .amt{filter:none;transform:none}}
+.hbar{display:inline-block;width:3em;height:.46em;border-radius:99px;background:currentColor;opacity:.2;vertical-align:.12em}
+.total .hbar{width:2.8em;height:.34em;opacity:.18;vertical-align:.2em}
 #btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
 html.masked .sctip b{letter-spacing:.05em}
 .fab.fab2{right:calc(max(20px,env(safe-area-inset-right)) + 4px);width:50px;height:50px;bottom:calc(22px + env(safe-area-inset-bottom));background:var(--panel);color:var(--gold);border:1px solid var(--line)}
@@ -415,7 +417,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.4 · 24/11/2026</div>
+  <div class="ver">Version 9.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -806,7 +808,8 @@ async function commit(){ snapshot(); render(); try { await save(); } catch(e){ t
 let hideAmounts = false;
 try { hideAmounts = localStorage.getItem('patrimony.hide') === '1'; } catch(e){}
 const moneyRaw = (v, cur = S.base, d = 0) => new Intl.NumberFormat('fr-FR', {style:'currency', currency:cur, minimumFractionDigits:d, maximumFractionDigits:d}).format(v);
-const money = (v, cur = S.base, d = 0) => hideAmounts ? moneyRaw(0, cur).replace(/[\d\s\u202f\u00a0.,]+/, m => (/^\s|\s$/.test(m) && m.trim() === '' ? m : '••••' + (/\s$/.test(m) ? '\u00a0' : '')) ) : moneyRaw(v, cur, d);
+const HBAR = '<span class="hbar" role="img" aria-label="montant masqué"></span>';
+const money = (v, cur = S.base, d = 0) => hideAmounts ? moneyRaw(0, cur).replace(/[\d\s\u202f\u00a0.,]+/, m => (/^\s|\s$/.test(m) && m.trim() === '' ? m : HBAR + (/\s$/.test(m) ? '\u00a0' : '')) ) : moneyRaw(v, cur, d);
 const qty = v => new Intl.NumberFormat('fr-FR', {maximumFractionDigits:8}).format(v);
 const pct = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits:1, signDisplay:'exceptZero'}).format(v);
 const when = t => new Date(t).toLocaleString('fr-FR', {day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit'});
@@ -828,14 +831,14 @@ function render(){
   if (!S) return;
   syncCatColors();
   const t = totals();
-  $('total').textContent = money(t.total);
+  $('total').innerHTML = money(t.total);
   const hist = series(0);
   const ref = hist.filter(h => h.d <= new Date(Date.now() - 30 * 864e5).toLocaleDateString('sv-SE')).pop() || (hist.length > 1 ? hist[0] : null);
   const dl = $('delta');
   if (ref && ref.total){
     const diff = t.total - ref.total;
     dl.className = 'delta ' + (diff >= 0 ? 'up' : 'down');
-    dl.textContent = (diff >= 0 ? '↗ +' : '↘ −') + money(Math.abs(diff)) + ' · ' + pct(diff / ref.total) + ' depuis le ' + shortDay(ref.d);
+    dl.innerHTML = (diff >= 0 ? '↗ +' : '↘ −') + money(Math.abs(diff)) + ' · ' + pct(diff / ref.total) + ' depuis le ' + shortDay(ref.d);
   } else { dl.className = 'delta'; dl.textContent = ''; }
   $('priceStatus').textContent = (S.pricesAt ? 'Prix du ' + when(S.pricesAt) : 'Prix jamais actualisés') + (t.missing ? ' · ' + t.missing + ' actif(s) sans prix ni taux' : '');
   drawChart(); drawDonut(t); drawList();
@@ -1229,7 +1232,7 @@ function drawChart(){
     `<path d="${line}L${X(x1)} ${H - B}L${X(x0)} ${H - B}Z" fill="url(#g)"/>` +
     `<path d="${line}" fill="none" stroke="${col}" stroke-width="1.8" stroke-linejoin="round" stroke-linecap="round"/>` +
     `<circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="7" fill="var(--goldsoft)"/><circle cx="${X(x1)}" cy="${Y(ys[ys.length - 1])}" r="3.5" fill="${col}"/>` +
-    `<text id="scMax" x="${L}" y="14" fill="var(--mute)" font-size="12">${money(Math.max(...ys))} max</text>` +
+    `<text id="scMax" x="${L}" y="14" fill="var(--mute)" font-size="12">${hideAmounts ? '' : money(Math.max(...ys)) + ' max'}</text>` +
     `<text x="${L}" y="${H - 5}" fill="var(--mute)" font-size="12">${lbl(pts[0].d)}</text>` +
     `<text x="${W - Rt}" y="${H - 5}" fill="var(--mute)" font-size="12" text-anchor="end">${lbl(pts[pts.length - 1].d)}</text>` +
     `<g id="scrub" style="display:none"><line id="scLine" y1="${T - 4}" y2="${H - B}" stroke="var(--mute)" stroke-width="1" stroke-dasharray="3 3"/><circle id="scDot" r="5" fill="var(--gold)" stroke="var(--panel)" stroke-width="2"/></g>`;
