@@ -98,9 +98,11 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .fig{touch-action:pan-y;-webkit-user-select:none;user-select:none;cursor:crosshair}
 .sctip{position:absolute;top:0;display:flex;flex-direction:column;align-items:center;padding:5px 10px;border-radius:10px;background:var(--ink);color:var(--bg);font-size:12px;line-height:1.3;pointer-events:none;white-space:nowrap;box-shadow:0 6px 16px rgba(0,0,0,.2);z-index:2}
 .sctip b{font-size:14px;font-weight:700}
-.ranges{display:flex;gap:4px;margin-top:12px;background:var(--panel2);border-radius:12px;padding:3px}
-.ranges button{flex:1;padding:7px 0;border-radius:9px;font-size:13px;color:var(--mute);min-height:34px}
-.ranges button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.ranges{position:relative;display:flex;gap:4px;margin-top:12px;background:var(--panel2);border-radius:12px;padding:3px}
+.rind{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:9px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .38s cubic-bezier(.3,1.25,.4,1),width .38s cubic-bezier(.3,1.25,.4,1);pointer-events:none}
+.ranges button{position:relative;z-index:1;flex:1;padding:7px 0;border-radius:9px;font-size:13px;color:var(--mute);min-height:34px;transition:color .25s}
+.ranges button.on{color:var(--ink);font-weight:600}
+@media(prefers-reduced-motion:reduce){.rind{transition:none}}
 
 /* Répartition */
 .rep{display:flex;align-items:center;gap:20px}
@@ -365,7 +367,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 8.4 · 24/11/2026</div>
+  <div class="ver">Version 8.5 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -391,7 +393,7 @@ html,body{overscroll-behavior-y:none}
         <button class="ovrow" data-ov="evo" aria-expanded="false"><span class="ovt">Évolution</span><svg class="spark" id="spark" viewBox="0 0 80 24" preserveAspectRatio="none" aria-hidden="true"></svg><span class="ovd num" id="evoDelta"></span><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button>
         <div class="drill"><div class="ovin">
           <div class="fig"><svg id="chart" aria-label="Évolution du patrimoine"></svg></div>
-          <div class="ranges" id="ranges">
+          <div class="ranges" id="ranges"><span class="rind" id="rind" aria-hidden="true"></span>
             <button data-r="30">1 M</button><button data-r="182">6 M</button><button data-r="ytd" class="on">YTD</button><button data-r="365">1 A</button><button data-r="0">Tout</button>
           </div>
         </div></div>
@@ -1192,19 +1194,25 @@ let chartState = null;
   fig.addEventListener('pointermove', e => { if (active) at(e.clientX); });
   ['pointerup', 'pointercancel', 'pointerleave'].forEach(ev => fig.addEventListener(ev, end));
 }
-const chartObs = new ResizeObserver(drawChart); chartObs.observe($('chart'));
+const chartObs = new ResizeObserver(() => { drawChart(); moveRind(true); }); chartObs.observe($('chart'));
+function moveRind(instant){
+  const on = $('ranges').querySelector('button.on'), r = $('rind'); if (!on || !r || !on.offsetWidth) return;
+  if (instant) r.style.transition = 'none';
+  r.style.width = on.offsetWidth + 'px'; r.style.transform = `translateX(${on.offsetLeft}px)`;
+  if (instant){ void r.offsetWidth; r.style.transition = ''; }
+}
 document.querySelectorAll('.ovrow').forEach(b => b.addEventListener('click', () => {
   const box = b.closest('.ovb'), open = !box.classList.contains('open');
   box.classList.toggle('open', open); b.setAttribute('aria-expanded', open);
   if (S){ S.ui = Object.assign({}, S.ui, {[b.dataset.ov]: open}); save().catch(() => {}); }
-  if (open && b.dataset.ov === 'evo') requestAnimationFrame(drawChart);
+  if (open && b.dataset.ov === 'evo') requestAnimationFrame(() => { drawChart(); moveRind(true); });
 }));
 function applyUi(){
   for (const k of ['evo', 'rep']){ const open = !!(S && S.ui && S.ui[k]); const box = document.querySelector(`.ovrow[data-ov="${k}"]`).closest('.ovb'); box.classList.toggle('open', open); box.querySelector('.ovrow').setAttribute('aria-expanded', open); }
 }
 $('ranges').addEventListener('click', e => {
   const b = e.target.closest('button'); if (!b) return;
-  range = b.dataset.r === 'ytd' ? 'ytd' : +b.dataset.r; [...$('ranges').children].forEach(x => x.classList.toggle('on', x === b)); drawChart();
+  range = b.dataset.r === 'ytd' ? 'ytd' : +b.dataset.r; $('ranges').querySelectorAll('button').forEach(x => x.classList.toggle('on', x === b)); moveRind(); drawChart();
 });
 
 /* ---------- Prix et taux ---------- */
