@@ -276,7 +276,14 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .fsheet .frow>label{margin:0;font-size:14px;color:var(--mute)}
 .seg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:var(--panel2);border-radius:12px;padding:3px}
 .seg4 button{padding:8px 1px;border-radius:9px;font-size:12px;color:var(--mute);min-height:36px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.seg4 button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
+.seg4{position:relative}
+.seg4 button{position:relative;z-index:1;transition:color .25s ease}
+.seg4 button.on{color:var(--ink);font-weight:600}
+.seg4 .sind{position:absolute;top:3px;bottom:3px;left:0;width:0;border-radius:9px;background:var(--panel);box-shadow:0 1px 3px rgba(0,0,0,.15);transition:transform .38s cubic-bezier(.3,1.25,.4,1),width .38s cubic-bezier(.3,1.25,.4,1)}
+.seg4 .sind.still{transition:none}
+#assetForm.swap{animation:fswap .32s ease both}
+@keyframes fswap{from{opacity:.35;transform:translateY(4px)}}
+@media(prefers-reduced-motion:reduce){.seg4 .sind{transition:none}#assetForm.swap{animation:none}}
 .fsheet .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-20px;padding-right:20px}
 .fsheet .chips::-webkit-scrollbar{display:none}
 .fsheet .chip{flex:none;min-height:38px;padding:7px 13px}
@@ -441,7 +448,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 10.1 · 24/11/2026</div>
+  <div class="ver">Version 10.2 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1466,7 +1473,21 @@ AMOUNT_IDS.forEach(id => $(id).addEventListener('input', amountInput));
 
 /* ---------- Feuille actif ---------- */
 let editing = null, cat = 'compte', coin = null, searchT = 0;
-$('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}">${c === 'immo' ? 'Immo' : m.one}</button>`).join('');
+$('catSeg').innerHTML = '<i class="sind" aria-hidden="true"></i>' + Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}">${c === 'immo' ? 'Immo' : m.one}</button>`).join('');
+function moveSind(anim){
+  const seg = $('catSeg'), on = seg.querySelector('button.on'), ind = seg.querySelector('.sind'); if (!on || !on.offsetWidth) return;
+  ind.classList.toggle('still', !anim); ind.style.width = on.offsetWidth + 'px'; ind.style.transform = `translateX(${on.offsetLeft}px)`;
+  if (!anim){ void ind.offsetWidth; ind.classList.remove('still'); }
+}
+// Change la hauteur de la fiche en douceur quand son contenu change.
+function smoothHeight(panel, fn){
+  const h0 = panel.offsetHeight; fn(); const h1 = panel.offsetHeight;
+  if (Math.abs(h1 - h0) < 2 || matchMedia('(prefers-reduced-motion:reduce)').matches) return;
+  clearTimeout(panel._sh); const st = panel.scrollTop;
+  panel.style.transition = 'none'; panel.style.height = h0 + 'px'; panel.style.overflow = 'hidden'; panel.scrollTop = st; void panel.offsetHeight;
+  panel.style.transition = 'height .38s cubic-bezier(.2,.9,.25,1), transform .38s cubic-bezier(.2,.9,.25,1)'; panel.style.height = h1 + 'px';
+  panel._sh = setTimeout(() => { panel.style.height = ''; panel.style.overflow = ''; panel.style.transition = ''; }, 400);
+}
 const INST = {crypto:['Wallet / plateforme', 'Ledger, Binance, Coinbase…'], compte:['Banque', 'BNP, Boursorama, Revolut…'], immo:['Mode de détention', 'En direct, SCI…'], societe:['Mode de détention', 'En direct, holding…']};
 let instVal = '', instNew = false;
 function instOptions(){ return [...new Set(S.assets.filter(a => a.cat === cat && a.inst).map(a => a.inst))].sort((a, b) => a.localeCompare(b, 'fr')); }
@@ -1492,7 +1513,7 @@ $('instList').addEventListener('click', e => {
 });
 function setCat(c){
   cat = c;
-  [...$('catSeg').children].forEach(b => b.classList.toggle('on', b.dataset.c === c));
+  [...$('catSeg').querySelectorAll('button')].forEach(b => b.classList.toggle('on', b.dataset.c === c)); moveSind(false);
   $('cryptoFields').classList.toggle('hidden', c !== 'crypto');
   $('cryptoQty').classList.toggle('hidden', c !== 'crypto');
   $('valueFields').classList.toggle('hidden', c === 'crypto');
@@ -1507,7 +1528,11 @@ function setCat(c){
   renderInst();
   $('lblValue').textContent = {societe:'Valeur de la société', immo:'Valeur estimée du bien', compte:'Solde'}[c] || 'Valeur';
 }
-$('catSeg').addEventListener('click', e => { const b = e.target.closest('button'); if (b) setCat(b.dataset.c); });
+$('catSeg').addEventListener('click', e => {
+  const b = e.target.closest('button'); if (!b || b.dataset.c === cat) return;
+  smoothHeight($('assetSheet').firstElementChild, () => setCat(b.dataset.c));
+  moveSind(true); const f = $('assetForm'); f.classList.remove('swap'); void f.offsetWidth; f.classList.add('swap');
+});
 let coinSearch = false;
 const coinLogo = (l) => l ? `<span class="ico mini clogo"><img src="${esc(l)}" alt="" onerror="this.remove()"></span>` : '<span class="ico mini none">₿</span>';
 const coinItem = c => `<button type="button" data-id="${esc(c.id)}" data-n="${esc(c.name)}" data-s="${esc(c.symbol)}" data-l="${esc(c.logo || '')}" class="${coin && coin.id === c.id ? 'on' : ''}">${coinLogo(c.logo)}<span class="pv">${esc(c.name)}</span><small style="color:var(--mute)">${esc((c.symbol || '').toUpperCase())}</small></button>`;
@@ -1568,7 +1593,7 @@ function openAsset(a){
   $('fCoinQ').value = ''; showCoin();
   $('btnDelete').classList.toggle('hidden', !a);
   AMOUNT_IDS.forEach(id => { $(id).value = fmtAmount($(id).value); });
-  setCat(a?.cat || cat); show('assetSheet');
+  setCat(a?.cat || cat); show('assetSheet'); requestAnimationFrame(() => moveSind(false));
 }
 $('btnAdd').addEventListener('click', () => openAsset(null));
 $('list').addEventListener('click', e => {
