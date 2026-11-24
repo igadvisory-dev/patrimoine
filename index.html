@@ -422,7 +422,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.6 · 24/11/2026</div>
+  <div class="ver">Version 9.7 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1088,9 +1088,11 @@ function drawDonut(t){
   $('repCard').classList.toggle('hidden', !entries.length);
   $('stack').innerHTML = entries.map(([c, v]) => `<i style="width:${(v / t.total * 100).toFixed(2)}%;background:${CATS[c].hex}"></i>`).join('');
   if (!entries.length) return;
-  const P = v => new Intl.NumberFormat('fr-FR', {style:'percent', maximumFractionDigits: 0}).format(v);
-  $('legend').innerHTML = entries.map(([c, v]) =>
-    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${P(v / t.total)}</span></div>`).join('');
+  // Pourcentages entiers dont la somme fait exactement 100 % (méthode du plus fort reste).
+  const sum = entries.reduce((s, [, v]) => s + v, 0), raw = entries.map(([, v]) => v / sum * 100), pcs = raw.map(Math.floor);
+  raw.map((r, i) => [r - pcs[i], i]).sort((a, b) => b[0] - a[0]).slice(0, 100 - pcs.reduce((s, x) => s + x, 0)).forEach(([, i]) => pcs[i]++);
+  $('legend').innerHTML = entries.map(([c, v], i) =>
+    `<div class="lg"><span class="sw" style="background:${CATS[c].hex}"></span><span>${CATS[c].label}</span><span class="am num">${money(v)}</span><span class="pc num">${pcs[i]}${NBSP}%</span></div>`).join('');
 }
 
 const shortDay = d => { const x = new Date(d); return x.toLocaleDateString('fr-FR', x.getFullYear() === new Date().getFullYear() ? {day:'numeric', month:'short'} : {day:'numeric', month:'short', year:'numeric'}); };
