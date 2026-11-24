@@ -330,7 +330,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.7 · 24/11/2026</div>
+  <div class="ver">Version 6.8 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -834,7 +834,7 @@ const INST_DOMAINS = {
   bitstack:'bitstack-app.com', paymium:'paymium.com', cryptocom:'crypto.com', bybit:'bybit.com', okx:'okx.com', kucoin:'kucoin.com', bitget:'bitget.com',
   exodus:'exodus.com', trustwallet:'trustwallet.com', phantom:'phantom.app', uphold:'uphold.com', coinhouse:'coinhouse.com', gemini:'gemini.com',
   bitvavo:'bitvavo.com', meria:'meria.com', tangem:'tangem.com', bitfinex:'bitfinex.com', gateio:'gate.io', mexc:'mexc.com', etoro:'etoro.com',
-  rabby:'rabby.io', safepal:'safepal.com', zengo:'zengo.com', deblock:'deblock.com', youngplatform:'youngplatform.com', swissborg:'swissborg.com', nexo:'nexo.com'
+  rabby:'rabby.io', sparrow:'sparrowwallet.com', multisig:'sparrowwallet.com', safepal:'safepal.com', zengo:'zengo.com', deblock:'deblock.com', youngplatform:'youngplatform.com', swissborg:'swissborg.com', nexo:'nexo.com'
 };
 const norm = s => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().replace(/[^a-z0-9]/g, '');
 function instDomain(name){
