@@ -213,6 +213,18 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .picklist button{display:flex;align-items:center;gap:10px;width:100%;padding:8px;border-radius:10px;min-height:44px;text-align:left;font-size:15px}
 .picklist button.on{background:var(--goldsoft);font-weight:600}
 .picklist button.add{color:var(--gold)}
+.cpk .picklist{left:auto;right:0;width:260px;max-height:300px}
+.cpk .pickbtn{gap:8px;padding:6px 10px 6px 7px}
+.cpk .pickbtn .pv{font-weight:600}
+.cpk .picklist .pn{color:var(--mute);font-size:13.5px;margin-left:auto;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cpk .picklist .pv{flex:none;font-weight:600}
+.cpk .ico.mini.badge svg{width:100%;height:100%}
+.cpk.small .pickbtn{flex:none;width:96px;min-height:40px;border-radius:12px;font-size:14px}
+.cpk.small{flex:none}
+.cpk.small .pickbtn{gap:5px;padding:0 8px 0 7px}
+.cpk.small .pickbtn .ico.mini{width:22px;height:22px}
+.cpk.small .pickbtn .pv{overflow:visible}
+.cpk .picklist .on .pn{font-weight:400}
 .pksearch{min-height:40px!important;margin:2px 0 4px;font-size:16px}
 .pkhead{font-size:12px;color:var(--mute);padding:6px 8px 2px;letter-spacing:.03em}
 .ico.mini.clogo{background:#fff;border-radius:50%}
@@ -377,7 +389,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 8.9 · 24/11/2026</div>
+  <div class="ver">Version 9.0 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1556,6 +1568,27 @@ function drawFx(){
   $('fxInfo').textContent = curs.length ? `Pour 1 ${S.base}. Automatique${S.fx.t ? ' (' + when(S.fx.t) + ')' : ''} ; remplis « manuel » pour forcer un taux.` : 'Aucune devise étrangère utilisée pour l\'instant.';
   $('fxList').innerHTML = curs.map(c => `<div class="fx"><b>${esc(c)}</b><span class="num" style="color:var(--mute)">${S.fx.rates[c] ? qty(S.fx.rates[c]) : 'inconnu'}</span><input data-cur="${esc(c)}" inputmode="decimal" placeholder="manuel" value="${esc(S.fx.manual[c] || '')}"></div>`).join('');
 }
+/* Listes de devises au même style que les listes banque/wallet (le <select> reste la source de vérité). */
+function curPicker(sel, small){
+  const wrap = document.createElement('div'); wrap.className = 'picker cpk' + (small ? ' small' : '');
+  wrap.innerHTML = '<button type="button" class="pickbtn" aria-haspopup="listbox"></button><div class="picklist hidden" role="listbox"></div>';
+  sel.after(wrap); sel.classList.add('hidden');
+  const btn = wrap.firstChild, list = wrap.lastChild, dd = '<svg class="dd" width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 4.5 6 7.5 9 4.5"/></svg>';
+  const bd = c => `<span class="ico mini badge">${curBadge(c)}</span>`;
+  const draw = () => { const v = sel.value; btn.innerHTML = bd(v) + `<span class="pv">${esc(v)}</span>` + dd; };
+  const d = Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value');
+  Object.defineProperty(sel, 'value', {get(){ return d.get.call(this); }, set(v){ d.set.call(this, v); draw(); }});
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.picklist').forEach(l => l !== list && l.classList.add('hidden'));
+    if (list.classList.toggle('hidden')) return;
+    list.innerHTML = [...sel.options].map(o => `<button type="button" data-v="${esc(o.value)}" class="${o.value === sel.value ? 'on' : ''}">${bd(o.value)}<span class="pv">${esc(o.value)}</span><span class="pn">${esc(CUR_NAME[o.value] || '')}</span></button>`).join('');
+    const on = list.querySelector('.on'); if (on) list.scrollTop = on.offsetTop - (list.clientHeight - on.offsetHeight) / 2;
+  });
+  list.addEventListener('click', e => { const b = e.target.closest('button[data-v]'); if (!b) return; list.classList.add('hidden'); if (b.dataset.v !== sel.value){ sel.value = b.dataset.v; sel.dispatchEvent(new Event('change')); } });
+  document.addEventListener('click', e => { if (!wrap.contains(e.target)) list.classList.add('hidden'); });
+  draw();
+}
+curPicker($('sBase'), true); curPicker($('fCur'));
 $('btnSettings').addEventListener('click', () => { $('sBase').value = S.base; drawFx(); show('setSheet'); });
 $('fxList').addEventListener('change', async e => { const c = e.target.dataset.cur; if (!c) return; S.fx.manual[c] = e.target.value.trim(); await commit(); drawFx(); });
 $('sBase').addEventListener('change', async e => {
