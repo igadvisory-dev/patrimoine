@@ -103,7 +103,7 @@ header.top .iconbtn{width:42px}
 .lm-bg{fill:light-dark(#0f2a44,#fff)}.lm-fg{fill:light-dark(#fff,#0f2a44)}.lm-ring{stroke:light-dark(rgba(255,255,255,.35),rgba(15,42,68,.35))}
 .iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}
 .iconbtn svg{width:21px;height:21px}
-main{max-width:720px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
+main{max-width:720px;margin:0 auto;padding:0 16px calc(104px + env(safe-area-inset-bottom))}
 .hero{padding:18px 4px 6px}
 .tlabel{font-size:13px;color:var(--mute);letter-spacing:.03em;margin-bottom:6px}
 .total{font:400 clamp(40px,12vw,56px)/1.02 var(--serif);letter-spacing:-.01em}
@@ -124,13 +124,16 @@ main{max-width:720px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inse
 .fsico{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--goldsoft);color:var(--gold);margin-bottom:6px}
 .fsico svg{width:26px;height:26px}
 /* Barre d'onglets façon verre dépoli, en bas de l'écran */
-#tabbar{position:fixed;left:0;right:0;bottom:0;z-index:20;display:flex;justify-content:center;gap:0;padding:6px max(16px,env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) max(16px,env(safe-area-inset-left));background:color-mix(in srgb,var(--bg) 55%,transparent);-webkit-backdrop-filter:blur(24px) saturate(1.8);backdrop-filter:blur(24px) saturate(1.8);border-top:1px solid color-mix(in srgb,var(--line) 70%,transparent);transform:translateZ(0)}
+#tabbar{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(14px + env(safe-area-inset-bottom));z-index:15;display:flex;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--panel) 72%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border:1px solid color-mix(in srgb,var(--line) 80%,transparent);box-shadow:0 10px 30px rgba(0,0,0,.22);-webkit-transform:translateZ(0);transition:opacity .45s ease}
 #tabbar .tabs{position:relative;display:flex}
-#tabbar .tab{position:relative;z-index:1;width:120px;height:54px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:16px;color:var(--mute);font-size:11.5px;font-weight:600;transition:color .25s ease}
+#tabbar .tab{position:relative;z-index:1;width:104px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:999px;color:var(--mute);font-size:11.5px;font-weight:600;transition:color .25s ease}
 #tabbar .tab svg{width:23px;height:23px;transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
 #tabbar .tab.on{color:var(--ink)}
 #tabbar .tab:active svg{transform:scale(.88)}
-#tabbar .tind{position:absolute;top:0;bottom:0;left:0;width:120px;border-radius:16px;background:color-mix(in srgb,var(--ink) 8%,transparent);transition:transform .4s cubic-bezier(.3,1.25,.4,1)}
+#tabbar .tind{position:absolute;top:0;bottom:0;left:0;width:104px;border-radius:999px;background:color-mix(in srgb,var(--ink) 9%,transparent);transition:transform .4s cubic-bezier(.3,1.25,.4,1)}
+#app.hidden~#tabbar{display:none}
+#app.lk-out~#tabbar{opacity:0;pointer-events:none}
+#app.lk-enter~#tabbar{animation:lkFade .5s ease .12s both}
 @media(prefers-reduced-motion:reduce){.view.vin,.view.vout{animation:none}#tabbar .tind{transition:none}}
 .delta{display:inline-flex;align-items:center;gap:6px;font-size:14px;margin-top:12px;padding:5px 10px;border-radius:99px;background:var(--panel2)}
 .delta:empty{display:none}
@@ -466,7 +469,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 10.5 · 24 Nov 2026</div>
+  <div class="ver">Version 10.6 · 24 Nov 2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -520,14 +523,15 @@ html,body{overscroll-behavior-y:none}
     </section>
    </div>
   </main>
-  <nav id="tabbar" aria-label="Navigation"><div class="tabs">
+</div>
+
+<!-- Ajout / modification d'un actif -->
+<nav id="tabbar" aria-label="Navigation"><div class="tabs">
     <i class="tind" aria-hidden="true"></i>
     <button type="button" class="tab on" data-v="vPat" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3a9 9 0 1 0 9 9h-9z"/><path d="M15 3.5A9 9 0 0 1 20.5 9H15z"/></svg><span>Patrimoine</span></button>
     <button type="button" class="tab" data-v="vFin"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 7h11l-3-3"/><path d="M17 17H6l3 3"/></svg><span>Finance</span></button>
   </div></nav>
-</div>
 
-<!-- Ajout / modification d'un actif -->
 <div class="sheet hidden" id="assetSheet"><div class="fsheet">
   <header><div><h2 id="assetTitle">Nouvel actif</h2><div class="hint" id="assetMeta" style="margin-top:2px"></div></div><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
   <div class="frow"><label>Actif</label><div class="seg4" id="catSeg"></div></div>
@@ -1994,7 +1998,7 @@ function showView(v, anim = true){
   const tabs = [...document.querySelectorAll('#tabbar .tab')], idx = tabs.findIndex(t => t.dataset.v === v), old = $(curView), nw = $(v);
   const dir = idx > tabs.findIndex(t => t.dataset.v === curView) ? 1 : -1;
   tabs.forEach(t => { t.classList.toggle('on', t.dataset.v === v); t.toggleAttribute('aria-current', t.dataset.v === v); if (t.dataset.v === v) t.setAttribute('aria-current', 'page'); });
-  document.querySelector('#tabbar .tind').style.transform = `translateX(${idx * 120}px)`;
+  document.querySelector('#tabbar .tind').style.transform = `translateX(${idx * 104}px)`;
   curView = v; try { localStorage.setItem('patrimony.tab', v); } catch(e){}
   const swap = () => { old.classList.add('hidden'); old.classList.remove('vout'); nw.classList.remove('hidden'); nw.style.setProperty('--vx', 16 * dir + 'px'); nw.classList.remove('vin'); void nw.offsetWidth; nw.classList.add('vin'); window.scrollTo(0, 0); if (v === 'vPat') fitTotal(); };
   if (!anim){ swap(); return; }
