@@ -182,6 +182,7 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .links{display:flex;justify-content:space-between;align-items:center;gap:12px;border-top:1px solid var(--line)}
 .lnk{color:var(--gold);font-size:14px;font-weight:500;padding:12px 0;min-height:44px}
 #infoBody .kv:first-child{border-top:0}
+#infoBody .kv.tot{font-weight:500}
 .sheet{transition:background-color .32s ease,-webkit-backdrop-filter .32s ease,backdrop-filter .32s ease}
 .sheet>div{transition:transform .38s cubic-bezier(.2,.9,.25,1)}
 .sheet.enter,.sheet.leave{background-color:rgba(0,0,0,0);-webkit-backdrop-filter:blur(0);backdrop-filter:blur(0)}
@@ -329,7 +330,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.5 · 24/11/2026</div>
+  <div class="ver">Version 6.6 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -716,27 +717,28 @@ function icon(a){
     : `<span class="ico" style="${st}">${letter}</span>`;
 }
 function immoRow(a){
-  const v = value(a), cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100, val = num(a.value) || 0, debt = num(a.debt) || 0;
-  const id = 'immo|a:' + a.id, open = openInst.has(id);
-  const sub = [debt ? 'Crédit ' + money(debt, cur) : 'Sans crédit', sh !== 100 ? qty(sh) + ' %' : '', a.note ? esc(a.note) : ''].filter(Boolean).join(' · ');
-  const kv = (k, x, cls = '') => `<div class="kv ${cls}"><span>${k}</span><b class="num">${x}</b></div>`;
-  const lines = kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '(' + money(debt, cur) + ')' : 'Aucun') +
-    (sh !== 100 ? kv('Valeur nette du bien', money(val - debt, cur)) + kv('Part détenue', qty(sh) + ' %') : '') +
-    (cur !== S.base ? kv('Ta part', money((val - debt) * sh / 100, cur)) : '') +
-    kv(sh !== 100 ? 'Ta part nette' : 'Valeur nette', v == null ? '—' : money(v), 'tot') +
-    `<div class="links"><button type="button" class="lnk" data-info="${a.id}">Autres informations</button><button type="button" class="lnk" data-edit="${a.id}">Modifier ce bien</button></div>`;
-  return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}"><button class="row instrow sub" aria-expanded="${open}"><span class="ico badge">${HOUSE_BADGE}</span><div class="nm"><div>${esc(a.name)}</div></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${lines}</div></div></div>`;
+  const v = value(a);
+  return `<button class="row sub" data-id="${a.id}"><span class="ico badge">${HOUSE_BADGE}</span><div class="nm"><div>${esc(a.name)}</div></div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
 }
 function societeRow(a){
-  const v = value(a), cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100, val = num(a.value) || 0;
-  const id = 'societe|a:' + a.id, open = openInst.has(id);
-  const sub = [qty(sh) + ' % détenus', a.inst ? esc(a.inst) : '', a.note ? esc(a.note) : ''].filter(Boolean).join(' · ');
+  const v = value(a), sh = num(a.share) ?? 100;
+  return `<button class="row sub" data-id="${a.id}">${icon(a)}<div class="nm"><div>${esc(a.name)}</div><small>${qty(sh)} % détenus</small></div><div class="val num">${v == null ? '—' : money(v)}</div></button>`;
+}
+function detailLines(a){
   const kv = (k, x, cls = '') => `<div class="kv ${cls}"><span>${k}</span><b class="num">${x}</b></div>`;
-  const lines = kv('Valeur de la société', money(val, cur)) + kv('Part détenue', qty(sh) + ' %') +
-    (cur !== S.base ? kv('Ta part en ' + cur, money(val * sh / 100, cur)) : '') +
-    kv('Ta part', v == null ? '—' : money(v), 'tot') +
-    `<div class="links"><button type="button" class="lnk" data-info="${a.id}">Autres informations</button><button type="button" class="lnk" data-edit="${a.id}">Modifier cette société</button></div>`;
-  return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}"><button class="row instrow sub" aria-expanded="${open}">${icon(a)}<div class="nm"><div>${esc(a.name)}</div><small>${sub}</small></div><div class="val num">${v == null ? '—' : money(v)}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${lines}</div></div></div>`;
+  const v = value(a), cur = (a.cur || S.base).toUpperCase(), sh = num(a.share) ?? 100, val = num(a.value) || 0, debt = num(a.debt) || 0;
+  if (a.cat === 'immo') return kv('Valeur du bien', money(val, cur)) + kv('Crédit restant dû', debt ? '(' + money(debt, cur) + ')' : 'Aucun') +
+    (sh !== 100 ? kv('Valeur nette du bien', money(val - debt, cur)) + kv('Part détenue', qty(sh) + ' %') : '') +
+    (cur !== S.base ? kv('Ta part', money((val - debt) * sh / 100, cur)) : '') +
+    kv(sh !== 100 ? 'Ta part nette' : 'Valeur nette', v == null ? '—' : money(v), 'tot');
+  if (a.cat === 'societe') return kv('Valeur de la société', money(val, cur)) + kv('Part détenue', qty(sh) + ' %') +
+    (cur !== S.base ? kv('Ta part', money(val * sh / 100, cur)) : '') +
+    kv(cur !== S.base ? 'Valeur' : 'Ta part', v == null ? '—' : money(v), 'tot');
+  if (a.cat === 'crypto'){
+    const p = num(a.price) ?? S.prices[a.coinId]?.[S.base.toLowerCase()];
+    return kv('Quantité', qty(num(a.qty) || 0) + ' ' + esc((a.symbol || '').toUpperCase())) + kv('Cours', p == null ? 'Inconnu' : money(p, S.base, p < 1 ? 4 : p < 10 ? 2 : 0)) + kv('Valeur', v == null ? '—' : money(v), 'tot');
+  }
+  return kv('Solde', money(val, cur)) + (cur !== S.base ? kv('Valeur', v == null ? '—' : money(v), 'tot') : '');
 }
 function assetRow(a){
   if (a.cat === 'immo') return immoRow(a);
@@ -1330,7 +1332,7 @@ $('list').addEventListener('click', e => {
   const v = e.target.closest('.vseg button');
   if (v){ if (viewMode() !== v.dataset.view){ S.view = v.dataset.view; drawList(); save().catch(() => {}); } return; }
   if (e.target.closest('.row[data-multi]')){ S.view = 'inst'; drawList(); save().catch(() => {}); toast('Détail par wallet'); return; }
-  const r = e.target.closest('.row[data-id]'); if (r){ const a = S.assets.find(x => x.id === r.dataset.id); if (a && (a.cat === 'crypto' || a.cat === 'compte')) return openInfo(a.id); openAsset(a); }
+  const r = e.target.closest('.row[data-id]'); if (r) return openInfo(r.dataset.id);
 });
 $('assetForm').addEventListener('submit', async e => {
   e.preventDefault();
@@ -1492,7 +1494,7 @@ function openInfo(id){
   $('infoTitle').textContent = a.name;
   const kv = (k, x) => `<div class="kv"><span>${k}</span><b>${x}</b></div>`;
   const instLbl = {crypto:'Wallet', compte:'Banque', immo:'Mode de détention', societe:'Mode de détention'}[a.cat];
-  $('infoBody').innerHTML = (a.inst ? kv(instLbl, esc(a.inst)) : '') +
+  $('infoBody').innerHTML = detailLines(a) + '<div style="height:12px"></div>' + (a.inst ? kv(instLbl, esc(a.inst)) : '') +
     (a.note ? (a.cat === 'immo' ? `<div class="kv"><span>Adresse</span><button class="addr" type="button" data-addr="${esc(a.note)}">${esc(a.note)}</button></div>` : kv('Note', esc(a.note))) : '') +
     kv('Ajouté le', addedTxt(a)) + kv('Dernière modification', updatedTxt(a)) +
     histHtml(a) +
