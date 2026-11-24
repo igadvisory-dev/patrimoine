@@ -264,6 +264,7 @@ html.masked .sctip b{letter-spacing:.05em}
 .ico.badge.sm svg{width:20px;height:20px}
 .urow{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--line)}
 .urow .nm{flex:1;min-width:0}.urow .nm div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.urow .nm small .chiplogo{width:14px;height:14px;vertical-align:-2px;margin-right:4px}
 .urow .nm small{display:block;color:var(--mute);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .urow .ico{width:34px;height:34px}.urow .ico.badge svg{width:34px;height:34px}
 .ufs{display:flex;flex-direction:column;gap:6px;flex:none;width:150px}
@@ -369,7 +370,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 7.8 · 24/11/2026</div>
+  <div class="ver">Version 7.9 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -780,6 +781,12 @@ function render(){
 }
 
 function icon(a){
+  if (a.cat === 'compte'){
+    // Cash : logo de la banque si elle est reconnue, sinon logo de la devise.
+    if (a.inst && instDomain(a.inst)) return instIcon(a.inst, 'compte');
+    const cb = curBadge(a.cur || S.base); if (cb) return `<span class="ico badge">${cb}</span>`;
+  }
+  if (a.cat === 'immo') return `<span class="ico badge">${HOUSE_BADGE}</span>`;
   const logo = a.cat === 'crypto' && (S.logos[a.coinId] || a.logo);
   const letter = a.cat === 'crypto' && a.symbol ? esc(a.symbol.slice(0, 1).toUpperCase()) : CATS[a.cat].ini;
   const st = `background:color-mix(in srgb,${CATS[a.cat].hex} 16%,transparent);color:${CATS[a.cat].hex}`;
@@ -1722,7 +1729,7 @@ function openUpdate(){
     if (!items.length) return '';
     return `<div class="ugrp"><div class="uhead">${catBadge(c) ? `<span class="ico badge sm">${catBadge(c)}</span>` : ''}${meta.label}</div>` + items.map(a => {
       const cur = (a.cur || S.base).toUpperCase();
-      const sub = [a.inst, a.cat === 'crypto' ? '' : (cur !== S.base ? cur : '')].filter(Boolean).map(esc).join(' · ');
+      const sub = (a.inst && a.cat === 'crypto' ? instIcon(a.inst, 'crypto', true) : '') + [a.inst, a.cat === 'crypto' ? '' : (cur !== S.base ? cur : '')].filter(Boolean).map(esc).join(' · ');
       const ic = a.cat === 'immo' ? `<span class="ico badge">${HOUSE_BADGE}</span>` : icon(a);
       const inputs = a.cat === 'crypto' ? field(a, 'qty', a.qty, (a.symbol || '').toUpperCase(), 'Quantité')
         : a.cat === 'immo' ? field(a, 'value', a.value, CUR_SYM[cur] || cur, 'Valeur') + field(a, 'debt', a.debt || 0, CUR_SYM[cur] || cur, 'Crédit')
