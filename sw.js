@@ -1,6 +1,6 @@
 // Service worker : garde l'app disponible hors ligne.
 // Les appels aux API de prix ne sont jamais mis en cache ici.
-const CACHE = 'patrimoine-v86';
+const CACHE = 'patrimoine-v87';
 const FILES = ['./', './index.html', './manifest.webmanifest', './icon-192.png', './icon-512.png', './apple-touch-icon.png'];
 
 self.addEventListener('install', e => {

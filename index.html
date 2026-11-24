@@ -58,14 +58,24 @@ html.locked,html.locked body{background:var(--lk-bg)}
 .dots i.on{background:var(--lk-on);border-color:var(--lk-on)}
 .dots.err{animation:shake .35s}
 /* Verrouillage manuel : l'app s'efface en douceur, l'écran du code apparaît en cascade. */
-#app.lk-out{transition:transform .45s cubic-bezier(.4,0,.2,1),opacity .45s ease,filter .45s ease;transform:scale(.94);opacity:0;filter:blur(8px);pointer-events:none}
+#app.lk-out{transition:opacity .45s ease;opacity:0;pointer-events:none}
+#app.lk-out>:not(.fab):not(.topband){transition:transform .45s cubic-bezier(.4,0,.2,1),filter .45s ease;transform:scale(.94);filter:blur(8px)}
+/* Déverrouillage : l'écran du code s'efface vers le haut, l'app apparaît en se rapprochant. */
+#lock.lk-out{animation:lkOut .5s ease .1s both;pointer-events:none}
+#lock.lk-out>*{animation:lkUpOut .4s cubic-bezier(.4,0,.2,1) both;animation-delay:calc(var(--d,0) * 30ms)}
+@keyframes lkOut{to{opacity:0}}
+@keyframes lkUpOut{to{opacity:0;transform:translateY(-16px) scale(.98)}}
+#app.lk-enter{animation:lkFade .5s ease .12s both}
+#app.lk-enter>:not(.fab):not(.topband){animation:appIn .6s cubic-bezier(.2,.8,.2,1) .12s both}
+@keyframes appIn{from{transform:scale(.96) translateY(10px);filter:blur(6px)}}
+@media(prefers-reduced-motion:reduce){#lock.lk-out>*,#app.lk-enter>*{animation:none}}
 #lock.lk-in{animation:lkFade .45s ease both}
 #lock.lk-in>*{animation:lkUp .6s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--d,0) * 55ms + 120ms)}
 @keyframes lkFade{from{opacity:0}}
 @keyframes lkUp{from{opacity:0;transform:translateY(18px) scale(.97)}}
 #btnLock svg path{transition:transform .22s cubic-bezier(.3,1.4,.5,1)}
 #btnLock.closing svg path{transform:translateY(2.5px)}
-@media(prefers-reduced-motion:reduce){#app.lk-out{transition:opacity .2s;transform:none;filter:none}#lock.lk-in>*{animation:none}}
+@media(prefers-reduced-motion:reduce){#app.lk-out>*{transition:none;transform:none;filter:none}#lock.lk-in>*{animation:none}}
 @keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 .pad{display:grid;grid-template-columns:repeat(3,78px);gap:18px;margin-top:8px}
 .pad button{position:relative;overflow:hidden;height:78px;border-radius:50%;background:var(--lk-key);border:1px solid var(--lk-keyb);color:var(--lk-ink);font:300 30px var(--sans);transition:transform .18s cubic-bezier(.2,.8,.2,1),background .25s;-webkit-user-select:none;user-select:none}
@@ -422,7 +432,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 9.7 · 24/11/2026</div>
+  <div class="ver">Version 9.8 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -709,7 +719,7 @@ function setLock(m, msg){
   mode = m; entry = ''; drawDots();
   $('lockTitle').textContent = {unlock:'Patrimony', setup:'Choisis un code', confirm:'Confirme le code'}[m];
   $('lockMsg').textContent = msg || (m === 'setup' ? '6 chiffres. Il chiffre tes données : sans lui, elles sont perdues.' : '');
-  $('lock').classList.remove('hidden'); $('app').classList.add('hidden'); document.documentElement.classList.add('locked');
+  $('lock').classList.remove('hidden', 'lk-out'); $('app').classList.add('hidden'); $('app').classList.remove('lk-enter'); document.documentElement.classList.add('locked');
 }
 function drawDots(){ [...$('dots').children].forEach((d, i) => d.classList.toggle('on', i < entry.length)); }
 function fail(msg){ $('dots').classList.remove('err'); void $('dots').offsetWidth; $('dots').classList.add('err'); $('lockMsg').textContent = msg; entry = ''; drawDots(); }
@@ -772,7 +782,12 @@ document.addEventListener('visibilitychange', () => {
 });
 
 function unlocked(){
-  $('lock').classList.add('hidden'); $('app').classList.remove('hidden'); document.documentElement.classList.remove('locked'); applyUi();
+  const lk = $('lock'), app = $('app');
+  [...lk.children].forEach((c, i) => c.style.setProperty('--d', i));
+  lk.classList.remove('lk-in'); lk.classList.add('lk-out'); app.classList.add('lk-enter');
+  app.classList.remove('hidden'); document.documentElement.classList.remove('locked'); applyUi();
+  setTimeout(() => { if (lk.classList.contains('lk-out')){ lk.classList.add('hidden'); lk.classList.remove('lk-out'); } }, 620);
+  setTimeout(() => app.classList.remove('lk-enter'), 760);
   render();
   if (navigator.onLine && Date.now() - (S.pricesAt || 0) > 60000) refresh(true, true);
   setTimeout(() => fetchHistory(false), 1500);
