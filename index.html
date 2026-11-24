@@ -193,8 +193,10 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .fsheet header h2{font-size:22px}
 .fsheet label{margin:10px 0 5px;font-size:12.5px}
 .fsheet input,.fsheet select{min-height:44px;padding:10px 12px}
-.seg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:3px;background:var(--panel2);border-radius:12px;padding:3px;margin-top:6px}
-.seg4 button{padding:8px 2px;border-radius:9px;font-size:13px;color:var(--mute);min-height:36px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.frow{display:grid;grid-template-columns:76px minmax(0,1fr);align-items:center;gap:10px;margin-top:10px}
+.fsheet .frow>label{margin:0;font-size:14px;color:var(--mute)}
+.seg4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:2px;background:var(--panel2);border-radius:12px;padding:3px}
+.seg4 button{padding:8px 1px;border-radius:9px;font-size:12px;color:var(--mute);min-height:36px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .seg4 button.on{background:var(--panel);color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(0,0,0,.15)}
 .fsheet .chips{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch;margin-right:-20px;padding-right:20px}
 .fsheet .chips::-webkit-scrollbar{display:none}
@@ -298,7 +300,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 5.5 · 24/11/2026</div>
+  <div class="ver">Version 5.6 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -346,7 +348,7 @@ html,body{overscroll-behavior-y:none}
 <!-- Ajout / modification d'un actif -->
 <div class="sheet hidden" id="assetSheet"><div class="fsheet">
   <header><h2 id="assetTitle">Nouvel actif</h2><button class="iconbtn" data-close aria-label="Fermer">✕</button></header>
-  <div class="seg4" id="catSeg"></div>
+  <div class="frow"><label>Actif</label><div class="seg4" id="catSeg"></div></div>
   <form id="assetForm" autocomplete="off">
     <div id="cryptoFields">
       <label for="fCoinQ">Crypto</label>
@@ -355,14 +357,16 @@ html,body{overscroll-behavior-y:none}
       <div class="results hidden" id="coinResults"></div>
     </div>
 
-    <div id="nameWrap">
+    <div id="nameWrap" class="frow">
       <label for="fName">Nom</label>
-      <input id="fName" placeholder="Ex. Livret A, Appartement Lyon…">
+      <input id="fName" placeholder="Ex. Livret A">
     </div>
 
-    <label id="lblInst">Banque</label>
-    <div class="chips" id="instChips"></div>
-    <input id="fInst" class="hidden" placeholder="" aria-labelledby="lblInst" style="margin-top:8px">
+    <div class="frow">
+      <label for="fInstSel" id="lblInst">Banque</label>
+      <select id="fInstSel"></select>
+    </div>
+    <div class="frow hidden" id="instNewRow"><span></span><input id="fInst" placeholder="" aria-labelledby="lblInst"></div>
 
     <div id="cryptoQty" class="two">
       <div><label for="fQty">Quantité</label><input id="fQty" inputmode="decimal" placeholder="0,5"></div>
@@ -1075,23 +1079,21 @@ AMOUNT_IDS.forEach(id => $(id).addEventListener('input', e => {
 
 /* ---------- Feuille actif ---------- */
 let editing = null, cat = 'compte', coin = null, searchT = 0;
-$('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}">${m.one}</button>`).join('');
+$('catSeg').innerHTML = Object.entries(CATS).map(([c, m]) => `<button type="button" data-c="${c}">${c === 'immo' ? 'Immo' : m.one}</button>`).join('');
 const INST = {crypto:['Wallet / plateforme', 'Ledger, Binance, Coinbase…'], compte:['Banque', 'BNP, Boursorama, Revolut…'], immo:['Mode de détention', 'En direct, SCI…'], societe:['Mode de détention', 'En direct, holding…']};
 let instVal = '', instNew = false;
 function instOptions(){ return [...new Set(S.assets.filter(a => a.cat === cat && a.inst).map(a => a.inst))].sort((a, b) => a.localeCompare(b, 'fr')); }
 function renderInst(){
   const opts = instOptions();
   if (instVal && !opts.includes(instVal)){ instNew = true; $('fInst').value = instVal; instVal = ''; }
-  const add = {crypto:'Nouveau wallet', compte:'Nouvelle banque', immo:'Autre', societe:'Autre'}[cat];
-  $('instChips').innerHTML = opts.map(v => `<button type="button" class="chip${!instNew && instVal === v ? ' on' : ''}" data-v="${esc(v)}">${instIcon(v, cat, true)}${esc(v)}</button>`).join('') +
-    `<button type="button" class="chip${!instNew && !instVal ? ' on' : ''}" data-v="">Aucun</button>` +
-    `<button type="button" class="chip add${instNew ? ' on' : ''}" data-new="1">+ ${add}</button>`;
-  $('fInst').classList.toggle('hidden', !instNew);
+  const add = {crypto:'+ Nouveau wallet…', compte:'+ Nouvelle banque…', immo:'+ Autre…', societe:'+ Autre…'}[cat];
+  $('fInstSel').innerHTML = `<option value="">Aucun</option>` + opts.map(v => `<option value="${esc(v)}">${esc(v)}</option>`).join('') + `<option value="__new">${add}</option>`;
+  $('fInstSel').value = instNew ? '__new' : instVal;
+  $('instNewRow').classList.toggle('hidden', !instNew);
 }
-$('instChips').addEventListener('click', e => {
-  const b = e.target.closest('.chip'); if (!b) return;
-  if (b.dataset.new){ instNew = true; instVal = ''; renderInst(); $('fInst').focus(); }
-  else { instNew = false; instVal = b.dataset.v; $('fInst').value = ''; renderInst(); }
+$('fInstSel').addEventListener('change', e => {
+  if (e.target.value === '__new'){ instNew = true; instVal = ''; renderInst(); $('fInst').focus(); }
+  else { instNew = false; instVal = e.target.value; $('fInst').value = ''; renderInst(); }
 });
 function setCat(c){
   cat = c;
@@ -1106,7 +1108,7 @@ function setCat(c){
   $('fNote').placeholder = c === 'immo' ? '12 rue de la Paix, 75002 Paris' : 'Remarque…';
   showCoin();
   $('fNote').autocomplete = c === 'immo' ? 'street-address' : 'off';
-  const inst = INST[c]; $('lblInst').textContent = inst[0]; $('fInst').placeholder = inst[1];
+  const inst = INST[c]; $('lblInst').textContent = {crypto:'Wallet', compte:'Banque', immo:'Détention', societe:'Détention'}[c]; $('fInst').placeholder = inst[1];
   renderInst();
   $('lblValue').textContent = {societe:'Valeur de la société', immo:'Valeur estimée du bien', compte:'Solde'}[c] || 'Valeur';
 }
