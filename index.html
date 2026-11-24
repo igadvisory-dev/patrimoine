@@ -143,7 +143,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px 120px}
 .cat .catrow:active{opacity:.7}
 .drill{display:grid;grid-template-rows:0fr;transition:grid-template-rows .42s cubic-bezier(.2,.8,.2,1)}
 .cat.open .drill{grid-template-rows:1fr}
-.drill-in{overflow:hidden;min-height:0;margin-left:19px;padding-left:20px;border-left:2px solid color-mix(in srgb,var(--c) 45%,transparent);opacity:0;transition:opacity .3s}
+.drill-in{overflow:hidden;min-height:0;padding-bottom:6px;margin-left:19px;padding-left:20px;border-left:2px solid color-mix(in srgb,var(--c) 45%,transparent);opacity:0;transition:opacity .3s}
 .cat.open .drill-in{opacity:1;transition:opacity .35s .05s}
 .drill .inst{margin-top:10px}
 .drill .inst:first-child{margin-top:4px}
@@ -330,7 +330,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 6.6 · 24/11/2026</div>
+  <div class="ver">Version 6.7 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -819,7 +819,7 @@ function catContent(c){
   const items = S.assets.filter(a => a.cat === c).sort((a, b) => (value(b) || 0) - (value(a) || 0));
   if (viewMode() === 'asset'){
     const rows = c === 'crypto' ? coinRows(items) : c === 'compte' ? curContent(items) : items.map((a, i) => assetRow(a).replace('<button class="row"', `<button style="--i:${i}" class="row sub"`)).join('');
-    return rows + `<button class="drill-add" type="button" data-add="${c}" style="--i:${items.length}">+ Ajouter ${{crypto:'une crypto', compte:'un compte', immo:'un bien', societe:'une société'}[c]}</button>`;
+    return rows;
   }
   return walletContent(c, items);
 }
@@ -880,7 +880,7 @@ function walletContent(c, items){
     const rows = list.map((a, i) => assetRow(a).replace('<button class="row"', `<button style="--i:${i}" class="row sub"`)).join('');
     return `<div class="instb${open ? ' open' : ''}" data-k="${esc(id)}" style="--i:${gi}"><button class="row instrow" aria-expanded="${open}">${instIcon(k || '', c)}<div class="nm"><div>${k ? esc(k) : none}</div><small>${plural(list.length, 'actif')}</small></div><div class="val num">${money(sumOf(list))}</div><span class="chev" aria-hidden="true"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m9 6 6 6-6 6"/></svg></span></button><div class="drill2"><div class="drill2-in">${rows}</div></div></div>`;
   }).join('');
-  return body + `<button class="drill-add" type="button" data-add="${c}" style="--i:${keys.length}">+ Ajouter ${{crypto:'une crypto', compte:'un compte', immo:'un bien', societe:'une société'}[c]}</button>`;
+  return body;
 }
 function toggleInst(box){
   const id = box.dataset.k, open = !openInst.has(id);
