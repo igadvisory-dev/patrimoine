@@ -242,14 +242,7 @@ a.btn{text-align:center;text-decoration:none;box-sizing:border-box}
 .tchg{font-size:13px;font-weight:600}.tchg.up{color:var(--up)}.tchg.down{color:var(--down)}
 #infoSheet .btn{margin-top:16px}
  #app{position:relative;z-index:0}
-.topband{position:absolute;left:0;right:0;top:calc(-1 * env(safe-area-inset-top));height:calc(env(safe-area-inset-top) + 260px);background:light-dark(#0f2a44,#07131f);z-index:-1;border-radius:0 0 28px 28px}
-:root:not([data-theme=dark]) #app header.top h1,:root:not([data-theme=dark]) #app .total{color:light-dark(#fff,var(--ink))}
-:root:not([data-theme=dark]) #app .tlabel,:root:not([data-theme=dark]) #app .iconbtn{color:light-dark(#b9c6d4,var(--mute))}
-:root:not([data-theme=dark]) #app .delta{background:light-dark(rgba(255,255,255,.1),var(--panel2))}
-:root:not([data-theme=dark]) #app .delta.up{color:light-dark(#7fe0b0,var(--up))}
-:root:not([data-theme=dark]) #app .delta.down{color:light-dark(#ffab9f,var(--down))}
-:root:not([data-theme=dark]) #app header.top .lm-bg{fill:light-dark(#fff,#fff)}
-:root:not([data-theme=dark]) #app header.top .lm-fg{fill:light-dark(#0f2a44,#0f2a44)}
+.topband{display:none;position:absolute;left:0;right:0;top:calc(-1 * env(safe-area-inset-top));height:calc(env(safe-area-inset-top) + 260px);background:light-dark(#0f2a44,#07131f);z-index:-1;border-radius:0 0 28px 28px}
 .bkbtns{display:flex;gap:6px;flex:none}
 .bkbtns .btn{width:auto;margin:0;padding:9px 12px;min-height:40px;font-size:14px}
 #btnHide .eye-off{display:none}html.masked #btnHide .eye-on{display:none}html.masked #btnHide .eye-off{display:block}
@@ -370,7 +363,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 8.0 · 24/11/2026</div>
+  <div class="ver">Version 8.1 · 24/11/2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1770,7 +1763,7 @@ const THEME = 'patrimoine.theme';
 function applyTheme(t){
   if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t; else delete document.documentElement.dataset.theme;
   const dark = t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches);
-  document.querySelector('meta[name=theme-color]').content = dark ? '#07131f' : '#0f2a44';
+  document.querySelector('meta[name=theme-color]').content = dark ? '#07131f' : '#f5f7fa';
   [...$('sTheme').children].forEach(b => b.classList.toggle('on', b.dataset.t === t));
 }
 let theme = 'auto';
