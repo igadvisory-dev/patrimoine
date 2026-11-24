@@ -103,7 +103,7 @@ header.top .iconbtn{width:42px}
 .lm-bg{fill:light-dark(#0f2a44,#fff)}.lm-fg{fill:light-dark(#fff,#0f2a44)}.lm-ring{stroke:light-dark(rgba(255,255,255,.35),rgba(15,42,68,.35))}
 .iconbtn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;color:var(--mute)}
 .iconbtn svg{width:21px;height:21px}
-main{max-width:720px;margin:0 auto;padding:0 16px calc(104px + env(safe-area-inset-bottom))}
+main{max-width:720px;margin:0 auto;padding:0 16px calc(96px + env(safe-area-inset-bottom))}
 .hero{padding:18px 4px 6px}
 .tlabel{font-size:13px;color:var(--mute);letter-spacing:.03em;margin-bottom:6px}
 .total{font:400 clamp(40px,12vw,56px)/1.02 var(--serif);letter-spacing:-.01em}
@@ -124,7 +124,7 @@ main{max-width:720px;margin:0 auto;padding:0 16px calc(104px + env(safe-area-ins
 .fsico{width:56px;height:56px;border-radius:50%;display:grid;place-items:center;background:var(--goldsoft);color:var(--gold);margin-bottom:6px}
 .fsico svg{width:26px;height:26px}
 /* Barre d'onglets façon verre dépoli, en bas de l'écran */
-#tabbar{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:calc(14px + env(safe-area-inset-bottom));z-index:15;display:flex;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--panel) 72%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border:1px solid color-mix(in srgb,var(--line) 80%,transparent);box-shadow:0 10px 30px rgba(0,0,0,.22);-webkit-transform:translateZ(0);transition:opacity .45s ease}
+#tabbar{position:fixed;left:0;right:0;margin:0 auto;width:max-content;bottom:max(10px, calc(env(safe-area-inset-bottom) - 4px));z-index:15;display:flex;padding:5px;border-radius:999px;background:color-mix(in srgb,var(--panel) 72%,transparent);-webkit-backdrop-filter:blur(22px) saturate(1.6);backdrop-filter:blur(22px) saturate(1.6);border:1px solid color-mix(in srgb,var(--line) 80%,transparent);box-shadow:0 10px 30px rgba(0,0,0,.22);-webkit-transform:translateZ(0);transition:opacity .45s ease}
 #tabbar .tabs{position:relative;display:flex}
 #tabbar .tab{position:relative;z-index:1;width:104px;height:56px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;border-radius:999px;color:var(--mute);font-size:11.5px;font-weight:600;transition:color .25s ease}
 #tabbar .tab svg{width:23px;height:23px;transition:transform .3s cubic-bezier(.3,1.4,.5,1)}
@@ -408,6 +408,9 @@ html.theming *:not(.fabtheme *),html.theming *::before{transition:background-col
 .ovb.open .ovin{opacity:1;transition:opacity .35s .08s}
 .ovin>:last-child{margin-bottom:16px}
 html,body{overscroll-behavior-y:none}
+/* Coque d'app : la page ne défile jamais, seul #app défile. Les éléments fixes (menu) ne peuvent donc plus se décaler. */
+html,body{height:100%;overflow:hidden}
+#app{position:fixed;inset:0;overflow-x:hidden;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:none;padding:env(safe-area-inset-top) env(safe-area-inset-right) 0 env(safe-area-inset-left)}
 #ptr{position:fixed;left:50%;top:calc(env(safe-area-inset-top) + 6px);width:40px;height:40px;border-radius:50%;background:var(--panel);border:1px solid var(--line);box-shadow:0 6px 20px rgba(0,0,0,.18);display:grid;place-items:center;color:var(--mute);z-index:15;opacity:0;transform:translate(-50%,-46px);pointer-events:none}
 #ptr svg{width:20px;height:20px;grid-area:1/1}
 #ptr .ok{opacity:0;transform:scale(.4);transition:opacity .2s,transform .3s cubic-bezier(.2,1.6,.4,1)}
@@ -469,7 +472,7 @@ html,body{overscroll-behavior-y:none}
     <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
     <button class="ghost bio off" id="btnBio" type="button" aria-label="Déverrouiller avec Face ID"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M4 8V6a2 2 0 0 1 2-2h2M16 4h2a2 2 0 0 1 2 2v2M20 16v2a2 2 0 0 1-2 2h-2M8 20H6a2 2 0 0 1-2-2v-2"/><path d="M9 9.5v1M15 9.5v1M12 9.5v3.5h-1"/><path d="M9.5 15.5a3.5 3.5 0 0 0 5 0"/></svg></button><button data-k="0">0</button><button class="ghost" data-k="del" aria-label="Effacer">⌫</button>
   </div>
-  <div class="ver">Version 10.6 · 24 Nov 2026</div>
+  <div class="ver">Version 10.7 · 24 Nov 2026</div>
 </div>
 
 <div id="ptr" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 12a8 8 0 1 1-2.34-5.66"/><path d="M20 4v4h-4"/></svg><svg class="ok" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12.5 4.5 4.5L19 7.5"/></svg></div>
@@ -1147,7 +1150,7 @@ function toggleCat(c){
   if (open) setTimeout(() => {
     box.classList.remove('anim');
     const r = box.getBoundingClientRect();
-    if (r.bottom > innerHeight - 90) window.scrollBy({top: Math.min(r.bottom - innerHeight + 110, r.top - 70), behavior:'smooth'});
+    if (r.bottom > innerHeight - 90) $('app').scrollBy({top: Math.min(r.bottom - innerHeight + 110, r.top - 70), behavior:'smooth'});
   }, 650);
 }
 
@@ -1456,13 +1459,13 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden && S 
     ptr.classList.toggle('ready', d >= TH && !busy);
   };
   document.addEventListener('touchstart', e => {
-    if (busy || !S || sheetOpen() || window.scrollY > 0 || e.touches.length > 1 || e.target.closest('.fig')) { y0 = null; return; }
+    if (busy || !S || sheetOpen() || $('app').scrollTop > 0 || e.touches.length > 1 || e.target.closest('.fig')) { y0 = null; return; }
     y0 = e.touches[0].clientY; dy = 0;
   }, {passive:true});
   document.addEventListener('touchmove', e => {
     if (y0 == null) return;
     const raw = e.touches[0].clientY - y0;
-    if (raw <= 0 || window.scrollY > 0){ if (dy) setPull(0, false); dy = 0; return; }
+    if (raw <= 0 || $('app').scrollTop > 0){ if (dy) setPull(0, false); dy = 0; return; }
     dy = Math.min(140, raw * 0.5);
     if (e.cancelable) e.preventDefault();
     setPull(dy, false);
@@ -2000,10 +2003,13 @@ function showView(v, anim = true){
   tabs.forEach(t => { t.classList.toggle('on', t.dataset.v === v); t.toggleAttribute('aria-current', t.dataset.v === v); if (t.dataset.v === v) t.setAttribute('aria-current', 'page'); });
   document.querySelector('#tabbar .tind').style.transform = `translateX(${idx * 104}px)`;
   curView = v; try { localStorage.setItem('patrimony.tab', v); } catch(e){}
-  const swap = () => { old.classList.add('hidden'); old.classList.remove('vout'); nw.classList.remove('hidden'); nw.style.setProperty('--vx', 16 * dir + 'px'); nw.classList.remove('vin'); void nw.offsetWidth; nw.classList.add('vin'); window.scrollTo(0, 0); if (v === 'vPat') fitTotal(); };
+  const swap = () => { old.classList.add('hidden'); old.classList.remove('vout'); nw.classList.remove('hidden'); nw.style.setProperty('--vx', 16 * dir + 'px'); nw.classList.remove('vin'); void nw.offsetWidth; nw.classList.add('vin'); $('app').scrollTo(0, 0); if (v === 'vPat') fitTotal(); };
   if (!anim){ swap(); return; }
   old.style.setProperty('--vx', 16 * dir + 'px'); old.classList.add('vout'); setTimeout(swap, 150);
 }
+// Après fermeture du clavier, iOS peut laisser la page décalée : on la remet en place.
+document.addEventListener('focusout', () => setTimeout(() => { if (window.scrollY || document.documentElement.scrollTop) window.scrollTo(0, 0); }, 60));
+visualViewport?.addEventListener('resize', () => { if (visualViewport.height >= innerHeight - 1 && window.scrollY) window.scrollTo(0, 0); });
 $('tabbar').addEventListener('click', e => { const t = e.target.closest('.tab'); if (t) showView(t.dataset.v); });
 try { if (localStorage.getItem('patrimony.tab') === 'vFin') showView('vFin', false); } catch(e){}
 let toastT = 0;
